@@ -2,8 +2,8 @@
     $dbuser="root";
     $dbpass="";
     $host="localhost";
-    $db="phpmyadmin";
+    $db="rposystem";
     $mysqli=new mysqli($host,$dbuser, $dbpass, $db);
-	$con=mysqli_connect("localhost","root","","phpmyadmin");
+	$con=mysqli_connect("localhost","root","","rposystem");
 
 ?>

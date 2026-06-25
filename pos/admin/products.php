@@ -73,9 +73,9 @@ require_once('partials/_head.php');
                       <td>
                         <?php
                         if ($prod->prod_img) {
-                          echo "<img src='assets/img/products/$prod->prod_img' height='60' width='60 class='img-thumbnail'>";
+                          echo "<img src='assets/img/products/" . htmlspecialchars($prod->prod_img) . "' class='table-product-image' alt='" . htmlspecialchars($prod->prod_name) . "'>";
                         } else {
-                          echo "<img src='assets/img/products/place.png' height='60' width='60 class='img-thumbnail'>";
+                          echo "<img src='assets/img/products/place.png' class='table-product-image' alt='Product placeholder'>";
                         }
 
                         ?>

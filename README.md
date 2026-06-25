@@ -1,19 +1,27 @@
+# Group 167 Final Project (Laravel Migration)
 
-**Admin Login Details**
+This project has been converted from raw PHP to Laravel.
 
-Email	: admin@mail.com
-Password: Enter2net
-PIN code: 2222
+## Setup
 
-**Cashier Login Details**
-PIN code: 0000
+1. `composer install`
+2. Configure `.env` database settings (defaults target XAMPP MySQL).
+3. Create database `rposystem` in MySQL.
+4. Import schema/data:
+   - `database/schema/rposystem.sql`
+5. Run:
+   - `php artisan key:generate`
+   - `php artisan serve`
 
+## App Routes
 
-Developed by:group 167
+- `/` Login (admin or cashier)
+- `/dashboard`
+- `/products`
+- `/customers`
+- `/orders`
+- `/payments`
 
-Mail: nicanderarkomensah@gmail.com
+## Legacy Removal
 
-
-
-
-539 x 606
+Legacy standalone PHP files were removed from the repository root and replaced by Laravel structure.

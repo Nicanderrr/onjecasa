@@ -9,22 +9,37 @@ while ($admin = $res->fetch_object()) {
 
 ?>
 
-    <nav class="navbar navbar-top navbar-expand-md navbar-dark" id="navbar-main">
+    <nav class="navbar navbar-top navbar-expand-md navbar-light admin-navbar" id="navbar-main">
         <div class="container-fluid">
-            <!-- Brand -->
-            <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="dashboard.php"><?php echo $admin->admin_name; ?> Dashboard</a>
-            <!-- Form -->
+            <div class="admin-navbar-title">
+                <span class="admin-navbar-kicker">POS Admin</span>
+                <a class="admin-navbar-heading" href="dashboard.php"><?php echo htmlspecialchars($admin->admin_name); ?> Dashboard</a>
+            </div>
 
-            <!-- User -->
+            <form class="admin-navbar-search d-none d-md-flex" role="search">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input class="form-control" type="search" placeholder="Search products, orders, reports" aria-label="Search">
+            </form>
+
+            <div class="admin-navbar-actions ml-auto">
+                <a class="admin-icon-button" href="dashboard.php" title="Dashboard" aria-label="Dashboard">
+                    <i class="bi bi-speedometer2" aria-hidden="true"></i>
+                </a>
+                <a class="admin-icon-button" href="payments_reports.php" title="Reports" aria-label="Reports">
+                    <span class="notification-dot"></span>
+                    <i class="bi bi-bell" aria-hidden="true"></i>
+                </a>
+            </div>
+
             <ul class="navbar-nav align-items-center d-none d-md-flex">
                 <li class="nav-item dropdown">
-                    <a class="nav-link pr-0" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <a class="nav-link pr-0 admin-profile-button" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <div class="media align-items-center">
-                            <span class="avatar avatar-sm rounded-circle">
+                            <span class="avatar avatar-sm">
                                 <img alt="Image placeholder" src="assets/img/theme/user-a-min.png">
                             </span>
                             <div class="media-body ml-2 d-none d-lg-block">
-                                <span class="mb-0 text-sm  font-weight-bold"><?php echo $admin->admin_name; ?></span>
+                                <span class="mb-0 text-sm font-weight-bold"><?php echo htmlspecialchars($admin->admin_name); ?></span>
                             </div>
                         </div>
                     </a>

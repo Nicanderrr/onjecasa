@@ -1,0 +1,4 @@
+@extends('layouts.admin')
+@section('content')
+<div class="card shadow"><div class="card-header border-0"><h3>Edit Staff</h3></div><div class="card-body"><form method="POST" action="{{ route('admin.staff.update',$row->id) }}">@csrf @method('PUT')<div class="form-row"><div class="col-md-6"><label>Name</label><input name="name" value="{{ $row->name }}" class="form-control" required></div><div class="col-md-6"><label>Number</label><input name="number" value="{{ $row->number }}" class="form-control" required></div></div><hr><div class="form-row"><div class="col-md-6"><label>Email</label><input type="email" name="email" value="{{ $row->email }}" class="form-control" required></div><div class="col-md-6"><label>New Pincode (optional)</label><input name="pincode" class="form-control"></div></div><br><button class="btn btn-success">Update</button></form></div></div>
+@endsection

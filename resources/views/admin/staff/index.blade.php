@@ -1,0 +1,4 @@
+@extends('layouts.admin')
+@section('content')
+<div class="row"><div class="col"><div class="card shadow"><div class="card-header border-0"><a href="{{ route('admin.staff.create') }}" class="btn btn-outline-success">Add Staff</a></div><div class="table-responsive"><table class="table align-items-center table-flush"><thead class="thead-light"><tr><th>Name</th><th>Number</th><th>Email</th><th>Actions</th></tr></thead><tbody>@foreach($rows as $r)<tr><td>{{ $r->name }}</td><td>{{ $r->number }}</td><td>{{ $r->email }}</td><td class="d-flex gap-2"><form method="POST" action="{{ route('admin.staff.destroy',$r->id) }}">@csrf @method('DELETE')<button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button></form><a href="{{ route('admin.staff.edit',$r->id) }}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a></td></tr>@endforeach</tbody></table></div></div></div></div>
+@endsection

@@ -154,278 +154,247 @@ if (isset($_POST['info-save'])) {
     }
   }
 }
+if (isset($_POST['changeCommandCenterImage'])) {
+  if (empty($_FILES['command_center_image']['name'])) {
+    $err = "Please Choose An Image";
+  } elseif ($_FILES['command_center_image']['error'] !== UPLOAD_ERR_OK) {
+    $err = "Image Upload Failed";
+  } else {
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    $extension = strtolower(pathinfo($_FILES['command_center_image']['name'], PATHINFO_EXTENSION));
+
+    if (!in_array($extension, $allowedExtensions, true)) {
+      $err = "Only JPG, PNG, And WEBP Images Are Accepted";
+    } else {
+      $uploadDir = __DIR__ . '/assets/img/settings';
+      if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0775, true);
+      }
+
+      $fileName = 'command-center-' . date('YmdHis') . '-' . random_int(100, 999) . '.' . $extension;
+      $relativePath = 'assets/img/settings/' . $fileName;
+      $targetPath = $uploadDir . '/' . $fileName;
+
+      if (move_uploaded_file($_FILES['command_center_image']['tmp_name'], $targetPath)) {
+        $postQuery = "UPDATE company_info SET command_center_image = ?";
+        $postStmt = $mysqli->prepare($postQuery);
+        $postStmt->bind_param('s', $relativePath);
+        $postStmt->execute();
+        $success = "Command Center Image Updated" && header("refresh:1; url=change_profile.php");
+      } else {
+        $err = "Unable To Save Uploaded Image";
+      }
+    }
+  }
+}
 
 require_once('partials/_head.php');
 ?>
 
 <body>
-  <!-- Sidenav -->
   <?php
   require_once('partials/_sidebar.php');
   ?>
-  <!-- Main content -->
   <div class="main-content">
-    <!-- Top navbar -->
     <?php
     require_once('partials/_topnav.php');
     $admin_id = $_SESSION['admin_id'];
-    //$login_id = $_SESSION['login_id'];
     $ret = "SELECT * FROM  rpos_admin  WHERE admin_id = '$admin_id'";
     $stmt = $mysqli->prepare($ret);
     $stmt->execute();
     $res = $stmt->get_result();
     while ($admin = $res->fetch_object()) {
+      $companyQuery = "SELECT * FROM company_info LIMIT 1";
+      $companyRun = mysqli_query($mysqli, $companyQuery);
+      $companyInfo = mysqli_fetch_assoc($companyRun) ?: [
+        'company' => 'POS System',
+        'address' => '',
+        'city' => '',
+        'phone' => '',
+        'command_center_image' => '',
+      ];
+      $commandCenterImage = $companyInfo['command_center_image'] ?? '';
     ?>
-      <!-- Header -->
-      <div class="header pb-8 pt-5 pt-lg-8 d-flex align-items-center" style="min-height: 600px; background-image: url(assets/img/theme/restro00.jpg); background-size: cover; background-position: center top;">
-        <!-- Mask -->
-        <span class="mask bg-gradient-default opacity-8"></span>
-        <!-- Header container -->
-        <div class="container-fluid d-flex align-items-center">
-          <div class="row">
-            <div class="col-lg-7 col-md-10">
-              <h1 class="display-2 text-white">Hello <?php echo $admin->admin_name; ?></h1>
-              <p class="text-white mt-0 mb-5">This is your profile page. You can customize your profile as you want And also change password too</p>
+      <main class="container-fluid admin-settings-page">
+        <section class="admin-settings-hero">
+          <div>
+            <p class="admin-profile-kicker">Account Settings</p>
+            <h1 class="admin-profile-title">Profile command center</h1>
+            <p class="admin-profile-copy">Update administrator access, receipt identity, and the sidebar image from one clean workspace.</p>
+          </div>
+          <div class="admin-settings-identity">
+            <div class="admin-profile-avatar">
+              <img src="assets/img/theme/user-a-min.png" alt="<?php echo htmlspecialchars($admin->admin_name); ?>">
+            </div>
+            <div>
+              <h2><?php echo htmlspecialchars($admin->admin_name); ?></h2>
+              <p><?php echo htmlspecialchars($admin->admin_email); ?></p>
             </div>
           </div>
+        </section>
+
+        <section class="admin-settings-strip">
+          <div class="admin-settings-stat">
+            <span>Company</span>
+            <strong><?php echo htmlspecialchars($companyInfo['company']); ?></strong>
+          </div>
+          <div class="admin-settings-stat">
+            <span>City</span>
+            <strong><?php echo htmlspecialchars($companyInfo['city']); ?></strong>
+          </div>
+          <div class="admin-settings-stat">
+            <span>Phone</span>
+            <strong><?php echo htmlspecialchars($companyInfo['phone']); ?></strong>
+          </div>
+        </section>
+
+        <div class="admin-settings-grid">
+          <section class="admin-panel admin-panel-pad admin-settings-card">
+            <div class="admin-settings-card-head">
+              <div>
+                <p class="admin-form-kicker">Administrator</p>
+                <h3>My Account</h3>
+              </div>
+            </div>
+            <form method="post">
+              <div class="admin-form-grid">
+                <div class="admin-form-field">
+                  <label for="input-username">User Name</label>
+                  <input type="text" name="admin_name" value="<?php echo htmlspecialchars($admin->admin_name); ?>" id="input-username" class="form-control">
+                </div>
+                <div class="admin-form-field">
+                  <label for="input-email">Email Address</label>
+                  <input type="email" id="input-email" value="<?php echo htmlspecialchars($admin->admin_email); ?>" name="admin_email" class="form-control">
+                </div>
+              </div>
+              <div class="admin-form-actions">
+                <button type="submit" name="ChangeProfile" class="btn btn-primary">Save Account</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="admin-panel admin-panel-pad admin-settings-card">
+            <div class="admin-settings-card-head">
+              <div>
+                <p class="admin-form-kicker">Command Center</p>
+                <h3>Sidebar Image</h3>
+              </div>
+              <div class="admin-command-preview">
+                <?php if (!empty($commandCenterImage)) { ?>
+                  <img src="<?php echo htmlspecialchars($commandCenterImage); ?>" alt="Command center image">
+                <?php } else { ?>
+                  <span>POS</span>
+                <?php } ?>
+              </div>
+            </div>
+            <form method="post" enctype="multipart/form-data">
+              <div class="admin-form-field">
+                <label for="command-center-image">Upload Image</label>
+                <input type="file" class="form-control" id="command-center-image" name="command_center_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+              </div>
+              <p class="admin-form-note">This image appears in the sidebar command-center card.</p>
+              <div class="admin-form-actions">
+                <button type="submit" name="changeCommandCenterImage" class="btn btn-primary">Update Image</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="admin-panel admin-panel-pad admin-settings-card">
+            <div class="admin-settings-card-head">
+              <div>
+                <p class="admin-form-kicker">Security</p>
+                <h3>Change Password</h3>
+              </div>
+            </div>
+            <form method="post">
+              <div class="admin-form-grid admin-form-grid-one">
+                <div class="admin-form-field">
+                  <label for="old-password">Old Password</label>
+                  <input type="password" name="old_password" id="old-password" class="form-control">
+                </div>
+                <div class="admin-form-field">
+                  <label for="new-password">New Password</label>
+                  <input type="password" name="new_password" id="new-password" class="form-control">
+                </div>
+                <div class="admin-form-field">
+                  <label for="confirm-password">Confirm New Password</label>
+                  <input type="password" name="confirm_password" id="confirm-password" class="form-control">
+                </div>
+              </div>
+              <div class="admin-form-actions">
+                <button type="submit" name="changePassword" class="btn btn-primary">Change Password</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="admin-panel admin-panel-pad admin-settings-card">
+            <div class="admin-settings-card-head">
+              <div>
+                <p class="admin-form-kicker">PIN Access</p>
+                <h3>Change Pincode</h3>
+              </div>
+            </div>
+            <form method="post">
+              <div class="admin-form-grid">
+                <div class="admin-form-field">
+                  <label for="old-pincode">Old Pincode</label>
+                  <input type="password" maxlength="4" name="old_pincode" id="old-pincode" class="form-control">
+                </div>
+                <div class="admin-form-field">
+                  <label for="new-pincode">New Pincode</label>
+                  <input type="password" maxlength="4" name="new_pincode" id="new-pincode" class="form-control">
+                </div>
+                <div class="admin-form-field">
+                  <label for="confirm-pincode">Confirm New Pincode</label>
+                  <input type="password" maxlength="4" name="confirm_pincode" id="confirm-pincode" class="form-control">
+                </div>
+              </div>
+              <div class="admin-form-actions">
+                <button type="submit" name="changePincode" class="btn btn-primary">Change Pincode</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="admin-panel admin-panel-pad admin-settings-card admin-settings-card-wide">
+            <div class="admin-settings-card-head">
+              <div>
+                <p class="admin-form-kicker">Receipt Identity</p>
+                <h3>Edit Company Details</h3>
+              </div>
+            </div>
+            <form method="post">
+              <div class="admin-form-grid admin-form-grid-four">
+                <div class="admin-form-field">
+                  <label for="company">Company Name</label>
+                  <input type="text" class="form-control" id="company" value="<?php echo htmlspecialchars($companyInfo['company']); ?>" name="company">
+                </div>
+                <div class="admin-form-field">
+                  <label for="address">Company Address</label>
+                  <input type="text" class="form-control" id="address" value="<?php echo htmlspecialchars($companyInfo['address']); ?>" name="address">
+                </div>
+                <div class="admin-form-field">
+                  <label for="city">City</label>
+                  <input type="text" class="form-control" id="city" value="<?php echo htmlspecialchars($companyInfo['city']); ?>" name="city">
+                </div>
+                <div class="admin-form-field">
+                  <label for="phone">Phone Number</label>
+                  <input class="form-control" id="phone" value="<?php echo htmlspecialchars($companyInfo['phone']); ?>" type="text" name="phone">
+                </div>
+              </div>
+              <p class="admin-form-note">Company information here appears on customer receipts.</p>
+              <div class="admin-form-actions">
+                <button type="submit" name="info-save" class="btn btn-primary">Save Company Details</button>
+              </div>
+            </form>
+          </section>
         </div>
-      </div>
-      <!-- Page content -->
-      <div class="container-fluid mt--8">
-        <div class="row">
-          <div class="col-xl-4 order-xl-2 mb-5 mb-xl-0">
-            <div class="card card-profile shadow">
-              <div class="row justify-content-center">
-                <div class="col-lg-3 order-lg-2">
-                  <div class="card-profile-image">
-                    <a href="#">
-                      <img src="assets/img/theme/user-a-min.png" class="rounded-circle">
-                    </a>
-                  </div>
-                </div>
-              </div>
-              <div class="card-header text-center border-0 pt-8 pt-md-4 pb-0 pb-md-4">
-                <div class="d-flex justify-content-between">
-                </div>
-              </div>
-              <div class="card-body pt-0 pt-md-4">
-                <div class="row">
-                  <div class="col">
-                    <div class="card-profile-stats d-flex justify-content-center mt-md-5">
-                      <div>
-                      </div>
-                      <div>
-                      </div>
-                      <div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="text-center">
-                  <h3>
-                    <?php echo $admin->admin_name; ?></span>
-                  </h3>
-                  <div class="h5 font-weight-300">
-                    <i class="ni location_pin mr-2"></i><?php echo $admin->admin_email; ?>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class=" mt-5 card bg-secondary shadow">
-            <div class="card-header bg-white border-0">
-                <div class="row align-items-center">
-                  <div class="col-8">
-                   <strong><h3 class="mb-0">Caution</h3></strong> 
-                  </div>
-                  <div class="card-body">
-                    <?php 
-                    $query = "SELECT * FROM company_info ";
-                    $run = mysqli_query($mysqli,$query);
-                    while($row = mysqli_fetch_assoc($run)){
-                      
-                    
-                    ?>
-                    <div style="font-size:14px">  <strong>Company Name:</strong> <span><?php echo $row['company'];?></span> </div>  <br>
-                    <div style="font-size:14px" ><strong>Company Address:</strong> <?php echo $row['address'];?> </div> <br>
-                    <div style="font-size:14px" ><strong>City:</strong> <?php echo $row['city'];?> </div> <br>
-                    <div style="font-size:14px" ><strong>Company Tel:</strong> <?php echo $row['phone'];?> </div>  <br>
-                  </div>
-                                    
-                                    <!-- Button trigger modal -->
-                  <button type="button" class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                  <i class="fas fa-edit" ></i> Edit 
-                  </button>
-
-                  <!-- Modal -->
-                  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Company Details</h1>
-                        </div>
-                        <div class="modal-body">
-                          <form action="" method="post">
-                                  <div>
-                                      <label for="company">Company Name</label>
-                                      <input type="text"  class="form-control mb-2" placeholder="eg; pro" value="<?php echo $row['company'] ?>" name="company">
-                                      </div>
-                                      <div>
-                                      <label for="address">Company Address</label>
-                                      <input type="text" class="form-control mb-2"  value="<?php echo $row['address'] ?>" placeholder="eg; Banana Street,East Legon"  name="address">
-                                  </div>
-
-                  <div>
-                    <label for="city">City</label>
-                    <input type="text" class="form-control mb-2"placeholder="eg; Accra"  value="<?php echo $row['city'] ?>"   name="city">
-                    </div>
-                    
-                    <div>
-                    <label for="phone">Phone Number</label>
-                    <input class="form-control mb-2" placeholder="eg; +233 0490302332" value="<?php echo $row['phone'] ?>"  type="text"name="phone">
-                  </div>
-                        
-                          <?php } ?>
-                  <small>Note that User Information changes made on here automically affects details on customer's receipt.</small>
-                        </div>
-                        <div class="modal-footer">
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-
-          </div>
-          <div class="col-xl-auto order-xl-1" style="margin-left:250px;">
-            <div class="card bg-secondary shadow">
-              <div class="card-header bg-white border-0">
-                <div class="row align-items-center">
-                  <div class="col-8">
-                    <h3 class="mb-0">My account</h3>
-                  </div>
-                  <div class="col-4 text-right">
-                  </div>
-                </div>
-              </div>
-              <div class="card-body">
-                <form method="post">
-                  <h6 class="heading-small text-muted mb-4">User information</h6>
-                  <div class="pl-lg-4">
-                    <div class="row">
-                      <div class="col-lg-6">
-                        <div class="form-group">
-                          <label class="form-control-label" for="input-username">User Name</label>
-                          <input type="text" name="admin_name" value="<?php echo $admin->admin_name; ?>" id="input-username" class="form-control form-control-alternative">
-                      </div>
-                    </div>
-                    <div class=" col-lg-6">
-                          <div class="form-group">
-                            <label class="form-control-label" for="input-email">Email address</label>
-                            <input type="email" id="input-email" value="<?php echo $admin->admin_email; ?>" name="admin_email" class="form-control form-control-alternative">
-                          </div>
-                        </div>
-
-                        <div class="col-lg-12">
-                          <div class="form-group">
-                            <input type="submit" id="input-email" name="ChangeProfile" class="btn btn-success form-control-alternative" value="Submit">
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </form>
-              <hr>
-              <form method ="post">
-                            <h6 class="heading-small text-muted mb-4">Change Password</h6>
-                            <div class="pl-lg-4">
-                              <div class="row">
-                                <div class="col-lg-12">
-                                  <div class="form-group">
-                                    <label class="form-control-label" for="input-username">Old Password</label>
-                                    <input type="password" name="old_password" id="input-username" class="form-control form-control-alternative">
-                                  </div>
-                                </div>
-
-                                <div class="col-lg-12">
-                                  <div class="form-group">
-                                    <label class="form-control-label" for="input-email">New Password</label>
-                                    <input type="password" name="new_password" class="form-control form-control-alternative">
-                                  </div>
-                                </div>
-
-                                <div class="col-lg-12">
-                                  <div class="form-group">
-                                    <label class="form-control-label" for="input-email">Confirm New Password</label>
-                                    <input type="password" name="confirm_password" class="form-control form-control-alternative">
-                                  </div>
-                                </div>
-
-                                <div class="col-lg-12">
-                                  <div class="form-group">
-                                    <input type="submit" id="input-email" name="changePassword" class="btn btn-success form-control-alternative" value="Change Password">
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                </form>
-              <hr>
-              <div class="mx-4" >
-            
-              <form method ="post">
-                            <h6 class="heading-small text-muted mb-4">Change Pincode</h6>
-                            <div class="pl-lg-4">
-                              <div class="row">
-                                <div class="col-lg-12">
-                                  <div class="form-group">
-                                    <label class="form-control-label" for="input-username">Old Pincode</label>
-                                    <input type="password" maxlength="4" name="old_pincode" id="input-username" class="form-control form-control-alternative">
-                                  </div>
-                                </div>
-
-                                <div class="col-lg-12">
-                                  <div class="form-group">
-                                    <label class="form-control-label" for="input-email">New Pincode</label>
-                                    <input type="password" maxlength="4" name="new_pincode" class="form-control form-control-alternative">
-                                  </div>
-                                </div>
-
-                                <div class="col-lg-12">
-                                  <div class="form-group">
-                                    <label class="form-control-label" for="input-email">Confirm New Pincode</label>
-                                    <input type="password" maxlength="4" name="confirm_pincode" class="form-control form-control-alternative">
-                                  </div>
-                                </div>
-
-                                <div class="col-lg-12">
-                                  <div class="form-group">
-                                    <input type="submit" id="input-email" name="changePincode" class="btn btn-success form-control-alternative" value="Change Pincode">
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                </form>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Footer -->
-      <?php
-    }
-      ?>
-      </div>
+      </main>
+    <?php } ?>
   </div>
-  <!-- Argon Scripts -->
+
   <?php
-  require_once('partials/_sidebar.php');
   require_once('partials/_scripts.php');
   require_once('partials/_footer.php');
-
   ?>
 </body>
 
