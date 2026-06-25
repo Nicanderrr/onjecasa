@@ -3,7 +3,7 @@
     <div class="row align-items-center justify-content-xl-between">
       <div class="col-xl-6">
         <div class="copyright text-center text-xl-left text-muted">
-        &copy; 2024 - <?php echo date('Y'); ?> - Developed By Group 167
+        &copy; 2024 - <?php echo date('Y'); ?> - Developed By <a href="mailto:nicanderarkomensah">Nicander</a> and <a href="https://github.com/benjamin-anayauk" target="_blank" rel="noopener">Benjamin</a>
         </div>
       </div>
       <div class="col-xl-6">

@@ -30,7 +30,7 @@
     <link href="assets/vendor/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
     <!-- Argon CSS -->
     <link type="text/css" href="assets/css/argon.css?v=1.0.0" rel="stylesheet">
-    <link type="text/css" href="assets/css/rtonline-admin.css?v=1.0.0" rel="stylesheet">
+    <link type="text/css" href="assets/css/rtonline-admin.css?v=1.0.1" rel="stylesheet">
     <script src="assets/js/swal.js"></script>
     <!--Load Swal-->
     <?php if (isset($success)) { ?>
