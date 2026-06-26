@@ -13,9 +13,9 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function show(): View
+    public function show(): RedirectResponse
     {
-        return view('auth.login');
+        return redirect('/pos/admin/index.php');
     }
 
     public function login(Request $request): RedirectResponse

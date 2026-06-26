@@ -14,137 +14,108 @@ if (isset($_POST['pincode'])) {
   $admin_pin = (($_POST['admin_pincode']));
 
 //search into db
-$sql = "SELECT * FROM rpos_admin WHERE admin_pincode = '$admin_pin'  ";
+$sql = "SELECT admin_id FROM rpos_admin WHERE admin_pincode = ?";
 //condition and implementation
-$result = mysqli_query($mysqli, $sql);
-if($result){
-
-        $num = mysqli_num_rows($result);
-        if($num > 0){
-   header("location:dashboard.php");
-        }
-
- else {
+$stmt = $mysqli->prepare($sql);
+$stmt->bind_param('s', $admin_pin);
+$stmt->execute();
+$stmt->store_result();
+if($stmt->num_rows > 0){
+  header("location:dashboard.php");
+  exit;
+} else {
   $err = "Incorrect Authentication Credentials ";
-}
 }
 //   if ($rs) {
  
 //   }
 }
+$adminName = 'Admin';
+$adminId = $_SESSION['admin_id'] ?? null;
+if ($adminId) {
+  $nameStmt = $mysqli->prepare("SELECT admin_name FROM rpos_admin WHERE admin_id = ? LIMIT 1");
+  $nameStmt->bind_param('s', $adminId);
+  $nameStmt->execute();
+  $nameStmt->bind_result($fetchedAdminName);
+  if ($nameStmt->fetch()) {
+    $adminName = $fetchedAdminName;
+  }
+  $nameStmt->close();
+}
 require_once('partials/_head.php');
 ?>
 
+<body class="bg-dark pos-auth-body">
+  <div id="bootOverlay" class="pos-boot-overlay">Verifying Admin Clearance...</div>
+  <div class="pos-auth-bg"></div>
+  <div class="pos-auth-gradient"></div>
+  <div class="pos-auth-scanline"></div>
+  <div id="posParticles"></div>
 
-<!DOCTYPE html>
-<html lang="en" >
+  <div class="main-content">
+    <main class="pos-auth-container">
+      <section class="pos-auth-shell">
+        <div class="pos-logo-container" aria-hidden="true">POS</div>
 
-<head>
-  <meta charset="UTF-8">
-  <meta charset="UTF-8">
-  <title>Four Digit Code</title>
+        <h1 class="pos-auth-title">PIN <span>Check</span></h1>
+        <p class="pos-auth-subtitle">Welcome back, <?php echo htmlspecialchars($adminName); ?></p>
 
+        <div class="pos-auth-glass">
+          <h2 class="pos-auth-form-title">Admin Access Code</h2>
+          <p class="pos-auth-form-mini">Enter your 4 digit PIN to open the dashboard</p>
 
-      <link rel="stylesheet" href="css/style.css">
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" >
-      <style>
-    html,
-        body {
-            background-color: #000;
-            color: #636b6f;
-            font-family: 'Nunito', sans-serif;
-            font-weight: 200;
-            height: 100vh;
-            margin: 0;
-            overflow-y: hidden;
-        }
+          <?php if (isset($err)) { ?>
+            <div class="pos-auth-error"><?php echo htmlspecialchars($err); ?></div>
+          <?php } ?>
 
-        .full-height {
-            height: 100vh;
-        }
+          <form action="admin_pass.php" method="post" role="form">
+            <div class="pos-auth-field">
+              <label class="pos-auth-label" for="pincode">Security PIN</label>
+              <input class="pos-auth-input pos-pin-input" type="password" name="admin_pincode" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" id="pincode" placeholder="0000" autocomplete="one-time-code" required autofocus>
+            </div>
 
-        .flex-center {
-            align-items: center;
-            display: flex;
-            justify-content: center;
-        }
-
-        .position-ref {
-            position: relative;
-        }
-
-        .top-right {
-            position: absolute;
-            right: 10px;
-            top: 18px;
-        }
-
-        .content {
-            text-align: center;
-            margin-bottom: 80px;
-
-        }
-      
-
-        .title {
-            font-size: 64px;
-            color: rgb(114, 250, 250);
-        }
-
-        .m-b-md {
-            margin-bottom: 30px;
-        }
-        .card{
-            padding: 20px 30px;
-            padding-top: 29px;
-        }
-    
-        div > h2{
-         position: relative;
-         top: 100px;   
-        }
-    
-</style>
-</head>
-   <body class="bg-dark">
-    
-     <h1 class="alert alert-secondary text-center text-dark" > Hello,<span style="text-transform:uppercase ;"> <?php 
-    $ql = "SELECT admin_name FROM rpos_admin;";
-    $rr = mysqli_query($mysqli,$ql);
-    $check = mysqli_num_rows($rr);
-    if($check > 0){
-        if($row = mysqli_fetch_assoc($rr)){
-      echo $row['admin_name'];
-    
-           
-        }
-    }
-    ?>
-    </span>
-    </h1> 
-   
-<div class="wel" >
-  
-    <h2 class="text-center text-light" >
-        Enter Code to Access <span class="text-teal"> Admin dashboard</span>
-    </h2>
-</div>
-    <div class="flex-center position-ref full-height">
-        
-        <div class="content card">
-  
-        <form action="admin_pass.php" method="post" >
-        <span class="input-group-text bg-light"><i class="ni ni-lock-circle-open"></i>
-          <input style=" border:none; font-size: large;" type="password" name="admin_pincode" maxlength="4" class="form-control" id="pincode" placeholder="Enter 4-digit code" required/>
-        </span>
-<div>
-<button class="btn btn-primary btn-block my-3" type="sumbit" name="pincode">Enter</button>
-</div>
-</form> 
-
+            <button class="pos-auth-button" type="submit" name="pincode">Enter Dashboard</button>
+          </form>
         </div>
-    </div>
-<script  src="script.js"></script>
+
+        <div class="pos-auth-footer">
+          Two-step admin verification.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <?php
+  require_once('partials/_footer.php');
+  require_once('partials/_scripts.php');
+  ?>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(function () {
+      var overlay = document.getElementById('bootOverlay');
+      if (!overlay) return;
+      overlay.style.opacity = '0';
+      setTimeout(function () { overlay.remove(); }, 520);
+    }, 760);
+
+    var particlesContainer = document.getElementById('posParticles');
+    if (particlesContainer) {
+      for (var i = 0; i < 58; i++) {
+        var particle = document.createElement('span');
+        var size = Math.random() * 3 + 1;
+        particle.className = 'pos-auth-particle';
+        particle.style.top = Math.random() * window.innerHeight + 'px';
+        particle.style.left = Math.random() * window.innerWidth + 'px';
+        particle.style.width = size + 'px';
+        particle.style.height = size + 'px';
+        particle.style.animationDuration = (Math.random() * 5 + 5) + 's';
+        particle.style.animationDelay = '-' + (Math.random() * 6) + 's';
+        particlesContainer.appendChild(particle);
+      }
+    }
+  });
+  </script>
 
 </body>
 

@@ -14,6 +14,15 @@ if (!empty($_SESSION['admin_id'])) {
   $adminName = $adminRecord['admin_name'] ?? $adminName;
 }
 
+$adminInitials = 'AD';
+$adminNameParts = preg_split('/\s+/', trim($adminName));
+if (!empty($adminNameParts[0])) {
+  $adminInitials = strtoupper(substr($adminNameParts[0], 0, 1));
+  if (!empty($adminNameParts[1])) {
+    $adminInitials .= strtoupper(substr($adminNameParts[1], 0, 1));
+  }
+}
+
 $navGroups = [
   [
     'label' => 'Overview',
@@ -104,8 +113,12 @@ $renderIcon = function (string $icon): void {
       </span>
     </a>
     <div class="admin-sidebar-user">
-      <p class="admin-sidebar-role">Administrator</p>
-      <p class="admin-sidebar-name"><?php echo htmlspecialchars($adminName); ?></p>
+      <span class="admin-sidebar-avatar" aria-hidden="true"><?php echo htmlspecialchars($adminInitials); ?></span>
+      <span class="admin-sidebar-user-copy">
+        <span class="admin-sidebar-role">Administrator</span>
+        <span class="admin-sidebar-name"><?php echo htmlspecialchars($adminName); ?></span>
+      </span>
+      <span class="admin-sidebar-status" title="Signed in"></span>
     </div>
   </div>
 

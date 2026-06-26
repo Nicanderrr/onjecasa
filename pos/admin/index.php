@@ -3,7 +3,6 @@ session_start();
 include('config/config.php');
 //login 
 if (isset($_POST['login'])) {
-  $admi_id = $_POST['admi_id'];
   $admin_email = $_POST['admin_email'];
   $admin_password = ($_POST['admin_password']); //double encrypt to increase security
   $stmt = $mysqli->prepare("SELECT *  FROM   rpos_admin WHERE (admin_email =? AND admin_password =?)"); //sql to log in user
@@ -15,7 +14,8 @@ if (isset($_POST['login'])) {
   if ($rs) {
     //if its sucessfull
 
-    header("location:admin_pass.php?auth0ixss=$admi_id");
+    header("location:admin_pass.php");
+    exit;
   } else {
     $err = "Incorrect Authentication Credentials ";
   }
@@ -47,8 +47,6 @@ require_once('partials/_head.php');
           <?php } ?>
 
           <form method="post" role="form">
-            <input required name="admi_id" value="<?php?>" type="hidden">
-
             <div class="pos-auth-field">
               <label class="pos-auth-label" for="a_email">Email Address</label>
               <input class="pos-auth-input" required name="admin_email" placeholder="admin@example.com" id="a_email" type="email" autocomplete="username" autofocus>
@@ -137,21 +135,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 </script>
-<script type="text/javascript">
-  (function(d, t) {
-      var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
-      v.onload = function() {
-        window.voiceflow.chat.load({
-          verify: { projectID: '67454a4a8d43f36981214fc6' },
-          url: 'https://general-runtime.voiceflow.com',
-          versionID: 'production',
-          voice: {
-            url: "https://runtime-api.voiceflow.com"
-          }
-        });
-      }
-      v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
-  })(document, 'script');
-</script>
+
 
 </html>

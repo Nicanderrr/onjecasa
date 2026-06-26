@@ -25,6 +25,25 @@
     <link href="assets/vendor/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
     <!-- Argon CSS -->
     <link type="text/css" href="assets/css/argon.css?v=1.0.0" rel="stylesheet">
+    <style>
+        .main-content {
+            padding-top: 5.8rem;
+        }
+
+        .navbar-top {
+            position: fixed !important;
+            top: 0 !important;
+            right: 0 !important;
+            left: 0 !important;
+            z-index: 1020 !important;
+        }
+
+        @media (min-width: 1200px) {
+            .navbar-top {
+                left: 250px !important;
+            }
+        }
+    </style>
     <script src="assets/js/swal.js"></script>
     <!--Load Swal-->
     <?php if (isset($success)) { ?>

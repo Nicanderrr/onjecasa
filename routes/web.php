@@ -16,9 +16,9 @@ use App\Http\Controllers\Cashier\PageController as CashierPageController;
 use App\Http\Controllers\Cashier\SaleController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect()->route('login'));
-Route::get('/login', [LoginController::class, 'show'])->name('login');
-Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
+Route::redirect('/', '/pos/admin/index.php');
+Route::redirect('/login', '/pos/admin/index.php')->name('login');
+Route::post('/login', fn () => redirect('/pos/admin/index.php'))->name('login.submit');
 Route::get('/admin/pincode', [LoginController::class, 'showAdminPincode'])->name('admin.pincode.show');
 Route::post('/admin/pincode', [LoginController::class, 'verifyAdminPincode'])->name('admin.pincode.verify');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');

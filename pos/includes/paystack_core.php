@@ -47,12 +47,17 @@ function paystack_json(array $payload, int $status = 200): void
 
 function paystack_requires_gateway(string $method): bool
 {
-    return in_array(strtolower(trim($method)), ['mobile money', 'bank transfer'], true);
+    return in_array(strtolower(trim($method)), ['mobile money', 'credit card', 'bank transfer'], true);
 }
 
 function paystack_channels_for(string $method): array
 {
-    return strtolower(trim($method)) === 'mobile money' ? ['mobile_money'] : ['bank_transfer'];
+    return match (strtolower(trim($method))) {
+        'mobile money' => ['mobile_money'],
+        'credit card' => ['card'],
+        'bank transfer' => ['bank_transfer'],
+        default => [],
+    };
 }
 
 function paystack_verify_reference(string $reference): array

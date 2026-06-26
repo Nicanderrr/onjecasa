@@ -24,7 +24,7 @@ if (isset($_POST['pay'])) {
     $pay_id = $_POST['pay_id'];
   
     if (paystack_requires_gateway($pay_method)) {
-      $err = "Use Paystack checkout to complete Mobile Money or Bank Transfer payments.";
+      $err = "Use Paystack checkout to complete Mobile Money, Credit Card, or Bank Transfer payments.";
     } else {
 
     $order_status = $_GET['order_status'];
@@ -164,9 +164,17 @@ require_once('partials/_head.php');
       const publicKey = form.dataset.paystackKey;
       const verifyUrl = form.dataset.verifyUrl;
       const sid = form.dataset.sid;
+      const checkoutEmail = 'nicanderarkomensha@gmail.com';
 
       function needsPaystack(value) {
-        return value === 'Mobile Money' || value === 'Bank Transfer';
+        return value === 'Mobile Money' || value === 'Credit Card' || value === 'Bank Transfer';
+      }
+
+      function paystackChannels(value) {
+        if (value === 'Mobile Money') return ['mobile_money'];
+        if (value === 'Credit Card') return ['card'];
+        if (value === 'Bank Transfer') return ['bank_transfer'];
+        return [];
       }
 
       form.addEventListener('submit', function (event) {
@@ -186,11 +194,11 @@ require_once('partials/_head.php');
         const reference = 'POS-' + sid + '-' + Date.now();
         const handler = PaystackPop.setup({
           key: publicKey,
-          email: sid.toLowerCase().replace(/[^a-z0-9]/g, '') + '@newpos.local',
+          email: checkoutEmail,
           amount: Math.round(parseFloat(amount.value.replace(/,/g, '')) * 100),
           currency: 'GHS',
           ref: reference,
-          channels: method.value === 'Mobile Money' ? ['mobile_money'] : ['bank_transfer'],
+          channels: paystackChannels(method.value),
           metadata: {
             custom_fields: [
               { display_name: 'Order Code', variable_name: 'sid', value: sid },

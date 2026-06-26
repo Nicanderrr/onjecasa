@@ -214,21 +214,36 @@ require_once('partials/_head.php');
         'command_center_image' => '',
       ];
       $commandCenterImage = $companyInfo['command_center_image'] ?? '';
+      $adminInitials = 'AD';
+      $adminNameParts = preg_split('/\s+/', trim($admin->admin_name));
+      if (!empty($adminNameParts[0])) {
+        $adminInitials = strtoupper(substr($adminNameParts[0], 0, 1));
+        if (!empty($adminNameParts[1])) {
+          $adminInitials .= strtoupper(substr($adminNameParts[1], 0, 1));
+        }
+      }
     ?>
       <main class="container-fluid admin-settings-page">
-        <section class="admin-settings-hero">
-          <div>
+        <section class="admin-settings-hero admin-profile-command-hero">
+          <div class="admin-profile-hero-copy">
             <p class="admin-profile-kicker">Account Settings</p>
             <h1 class="admin-profile-title">Profile command center</h1>
             <p class="admin-profile-copy">Update administrator access, receipt identity, and the sidebar image from one clean workspace.</p>
-          </div>
-          <div class="admin-settings-identity">
-            <div class="admin-profile-avatar">
-              <img src="assets/img/theme/user-a-min.png" alt="<?php echo htmlspecialchars($admin->admin_name); ?>">
+            <div class="admin-profile-hero-actions">
+              <a class="btn btn-light" href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+              <a class="btn btn-outline-light" href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
-            <div>
+          </div>
+          <div class="admin-settings-identity admin-profile-identity-card">
+            <div class="admin-profile-avatar admin-profile-avatar-modern">
+              <img src="assets/img/theme/user-a-min.png" alt="<?php echo htmlspecialchars($admin->admin_name); ?>">
+              <span class="admin-profile-avatar-initials"><?php echo htmlspecialchars($adminInitials); ?></span>
+            </div>
+            <div class="admin-profile-identity-copy">
+              <span class="admin-profile-role-pill">Administrator</span>
               <h2><?php echo htmlspecialchars($admin->admin_name); ?></h2>
               <p><?php echo htmlspecialchars($admin->admin_email); ?></p>
+              <span class="admin-profile-status-pill"><span></span> Signed in</span>
             </div>
           </div>
         </section>
@@ -251,7 +266,8 @@ require_once('partials/_head.php');
         <div class="admin-settings-grid">
           <section class="admin-panel admin-panel-pad admin-settings-card">
             <div class="admin-settings-card-head">
-              <div>
+              <span class="admin-settings-card-icon"><i class="fas fa-user-shield"></i></span>
+              <div class="admin-settings-card-title">
                 <p class="admin-form-kicker">Administrator</p>
                 <h3>My Account</h3>
               </div>
@@ -275,9 +291,12 @@ require_once('partials/_head.php');
 
           <section class="admin-panel admin-panel-pad admin-settings-card">
             <div class="admin-settings-card-head">
-              <div>
-                <p class="admin-form-kicker">Command Center</p>
-                <h3>Sidebar Image</h3>
+              <div class="admin-settings-card-title-row">
+                <span class="admin-settings-card-icon"><i class="fas fa-image"></i></span>
+                <div class="admin-settings-card-title">
+                  <p class="admin-form-kicker">Command Center</p>
+                  <h3>Sidebar Image</h3>
+                </div>
               </div>
               <div class="admin-command-preview">
                 <?php if (!empty($commandCenterImage)) { ?>
@@ -301,7 +320,8 @@ require_once('partials/_head.php');
 
           <section class="admin-panel admin-panel-pad admin-settings-card">
             <div class="admin-settings-card-head">
-              <div>
+              <span class="admin-settings-card-icon"><i class="fas fa-key"></i></span>
+              <div class="admin-settings-card-title">
                 <p class="admin-form-kicker">Security</p>
                 <h3>Change Password</h3>
               </div>
@@ -329,7 +349,8 @@ require_once('partials/_head.php');
 
           <section class="admin-panel admin-panel-pad admin-settings-card">
             <div class="admin-settings-card-head">
-              <div>
+              <span class="admin-settings-card-icon"><i class="fas fa-lock"></i></span>
+              <div class="admin-settings-card-title">
                 <p class="admin-form-kicker">PIN Access</p>
                 <h3>Change Pincode</h3>
               </div>
@@ -357,7 +378,8 @@ require_once('partials/_head.php');
 
           <section class="admin-panel admin-panel-pad admin-settings-card admin-settings-card-wide">
             <div class="admin-settings-card-head">
-              <div>
+              <span class="admin-settings-card-icon"><i class="fas fa-building"></i></span>
+              <div class="admin-settings-card-title">
                 <p class="admin-form-kicker">Receipt Identity</p>
                 <h3>Edit Company Details</h3>
               </div>

@@ -34,6 +34,8 @@ $invoice = [
 
 $products = [];
 $paymentMethod = 'Not recorded';
+$paymentReference = 'Not recorded';
+$paidAt = '';
 $salesPerson = $receiptSalesPerson ?? '';
 
 $stmt = $mysqli->prepare('SELECT company, address, city, phone FROM company_info LIMIT 1');
@@ -80,12 +82,14 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-$stmt = $mysqli->prepare('SELECT pay_method FROM rpos_payments WHERE SID = ? ORDER BY created_at DESC LIMIT 1');
+$stmt = $mysqli->prepare('SELECT pay_method, pay_code, created_at FROM rpos_payments WHERE SID = ? ORDER BY created_at DESC LIMIT 1');
 $stmt->bind_param('s', $receiptId);
 $stmt->execute();
 $result = $stmt->get_result();
 if ($row = $result->fetch_assoc()) {
     $paymentMethod = $row['pay_method'] ?: $paymentMethod;
+    $paymentReference = $row['pay_code'] ?: $paymentReference;
+    $paidAt = !empty($row['created_at']) ? date('d M Y, g:i A', strtotime($row['created_at'])) : '';
 }
 $stmt->close();
 
@@ -109,6 +113,13 @@ if ($subTotal <= 0) {
 $grandTotal = (float) $invoice['total_amt'];
 $itemCount = array_sum(array_column($products, 'qty'));
 $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company['company']), 0, 2)) ?: 'POS';
+$verificationSeed = $invoice['invoice_no'] . '|' . $grandTotal . '|' . $paymentReference;
+$verificationCode = strtoupper(substr(hash('sha256', $verificationSeed), 0, 12));
+$qrHash = hash('sha256', $verificationSeed . '|qr');
+$qrCells = [];
+for ($i = 0; $i < 81; $i++) {
+    $qrCells[] = hexdec($qrHash[$i % strlen($qrHash)]) % 2 === 0;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -127,6 +138,7 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
       --brand-dark: #163b8f;
       --green: #10b981;
       --gold: #f59e0b;
+      --danger: #ef4444;
     }
 
     * {
@@ -188,11 +200,26 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
     }
 
     .receipt {
+      position: relative;
       overflow: hidden;
       background: var(--paper);
       border: 1px solid rgba(148, 163, 184, 0.2);
       border-radius: 18px;
       box-shadow: 0 30px 80px rgba(15, 23, 42, 0.16);
+    }
+
+    .receipt::before {
+      content: "PAID";
+      position: absolute;
+      right: -1.6rem;
+      top: 7.6rem;
+      z-index: 1;
+      color: rgba(16, 185, 129, 0.08);
+      font-size: 8rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      transform: rotate(-14deg);
+      pointer-events: none;
     }
 
     .receipt-hero {
@@ -271,6 +298,8 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
     }
 
     .receipt-body {
+      position: relative;
+      z-index: 2;
       padding: 2rem;
     }
 
@@ -349,14 +378,15 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
 
     .receipt-bottom {
       display: grid;
-      grid-template-columns: 1fr 330px;
+      grid-template-columns: minmax(0, 1fr) 330px;
       gap: 1.25rem;
       margin-top: 1.5rem;
       align-items: start;
     }
 
     .note-card,
-    .summary-card {
+    .summary-card,
+    .verify-card {
       border: 1px solid var(--line);
       border-radius: 14px;
       background: #fff;
@@ -398,6 +428,58 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
     .barcode i:nth-child(4n) { height: 52%; }
     .barcode i:nth-child(5n) { height: 100%; }
 
+    .verify-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: center;
+      margin-top: 1rem;
+      padding: 1rem;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+
+    .verify-grid span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .verify-grid strong {
+      display: block;
+      margin-top: 0.25rem;
+      color: var(--ink);
+      font-size: 0.95rem;
+      word-break: break-word;
+    }
+
+    .qr-mark {
+      display: grid;
+      grid-template-columns: repeat(9, 6px);
+      grid-template-rows: repeat(9, 6px);
+      gap: 2px;
+      padding: 0.45rem;
+      border: 1px solid #d7deea;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .qr-mark i {
+      display: block;
+      width: 6px;
+      height: 6px;
+      border-radius: 1px;
+      background: #e2e8f0;
+    }
+
+    .qr-mark i.is-on {
+      background: #111827;
+    }
+
     .summary-card {
       overflow: hidden;
     }
@@ -428,6 +510,18 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
 
     .summary-total strong {
       font-size: 1.35rem;
+    }
+
+    .payment-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 0.65rem;
+      border-radius: 999px;
+      color: #065f46;
+      background: #d1fae5;
+      font-size: 0.78rem;
+      font-weight: 900;
     }
 
     .receipt-footer {
@@ -473,12 +567,13 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
 
     @media print {
       @page {
-        size: A4;
-        margin: 10mm;
+        size: 80mm auto;
+        margin: 4mm;
       }
 
       body {
         background: #fff;
+        font-size: 11px;
       }
 
       .print-actions {
@@ -498,6 +593,50 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
       }
 
       .receipt-hero {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 0;
+      }
+
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+      }
+
+      .brand-name {
+        font-size: 1.15rem;
+      }
+
+      .brand-meta,
+      .receipt-badge,
+      .detail-card strong,
+      .items-table td,
+      .note-card p,
+      .receipt-footer {
+        font-size: 0.72rem;
+      }
+
+      .receipt-body {
+        padding: 1rem 0;
+      }
+
+      .detail-grid,
+      .receipt-bottom,
+      .receipt-footer {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-card,
+      .note-card,
+      .summary-card {
+        border-radius: 0;
+      }
+
+      .items-table {
+        border-right: 0;
+        border-left: 0;
         border-radius: 0;
       }
 
@@ -553,7 +692,15 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
           </div>
           <div class="detail-card">
             <span>Payment</span>
-            <strong><?php echo receipt_text($paymentMethod); ?></strong>
+            <strong><span class="payment-pill"><?php echo receipt_text($paymentMethod); ?></span></strong>
+          </div>
+          <div class="detail-card">
+            <span>Payment Ref</span>
+            <strong><?php echo receipt_text($paymentReference); ?></strong>
+          </div>
+          <div class="detail-card">
+            <span>Paid At</span>
+            <strong><?php echo receipt_text($paidAt ?: $invoice['invoice_date']); ?></strong>
           </div>
         </section>
 
@@ -585,6 +732,15 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
             <div class="barcode" aria-hidden="true">
               <?php for ($i = 0; $i < 34; $i++) { ?><i></i><?php } ?>
             </div>
+            <div class="verify-grid">
+              <div>
+                <span>Verification Code</span>
+                <strong><?php echo receipt_text($verificationCode); ?></strong>
+              </div>
+              <div class="qr-mark" aria-label="Receipt verification code">
+                <?php foreach ($qrCells as $isOn) { ?><i class="<?php echo $isOn ? 'is-on' : ''; ?>"></i><?php } ?>
+              </div>
+            </div>
           </div>
 
           <div class="summary-card">
@@ -600,9 +756,17 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
               <span>Discount</span>
               <strong>&#8373;0.00</strong>
             </div>
+            <div class="summary-line">
+              <span>Tax / VAT</span>
+              <strong>&#8373;0.00</strong>
+            </div>
             <div class="summary-total">
               <span>Total Paid</span>
               <strong>&#8373;<?php echo receipt_money($grandTotal); ?></strong>
+            </div>
+            <div class="summary-line">
+              <span>Balance</span>
+              <strong>&#8373;0.00</strong>
             </div>
           </div>
         </section>
@@ -610,7 +774,7 @@ $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company
 
       <footer class="receipt-footer">
         <div>
-          Generated by Command Center POS. Receipt ID <?php echo receipt_text($invoice['invoice_no']); ?>.
+          Generated by Command Center POS. Receipt ID <?php echo receipt_text($invoice['invoice_no']); ?>. Developed by Nicander and Benjamin.
         </div>
         <div class="signature">Authorized Signature</div>
       </footer>

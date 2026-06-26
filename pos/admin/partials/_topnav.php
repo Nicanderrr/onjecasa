@@ -5,6 +5,30 @@ $ret = "SELECT * FROM  rpos_admin  WHERE admin_id = '$admin_id'";
 $stmt = $mysqli->prepare($ret);
 $stmt->execute();
 $res = $stmt->get_result();
+$adminPageFile = basename($_SERVER['PHP_SELF'], '.php');
+$adminPageTitles = [
+    'dashboard' => 'Dashboard',
+    'products' => 'Products',
+    'categories' => 'Categories',
+    'add_product' => 'Add Product',
+    'update_product' => 'Edit Product',
+    'add_catg' => 'Add Category',
+    'update_catg' => 'Edit Category',
+    'hrm' => 'Employees',
+    'add_staff' => 'Add Employee',
+    'update_staff' => 'Edit Employee',
+    'orders' => 'Orders',
+    'orders_reports' => 'Orders Reports',
+    'payments' => 'Payments',
+    'payments_reports' => 'Payments Reports',
+    'receipts' => 'Receipts',
+    'change_profile' => 'Profile',
+    'settings' => 'Settings',
+    'invo' => 'Invoice',
+    'newi' => 'Invoice',
+    'print_receipt' => 'Receipt',
+];
+$adminPageTitle = $adminPageTitles[$adminPageFile] ?? ucwords(str_replace('_', ' ', $adminPageFile));
 while ($admin = $res->fetch_object()) {
 
 ?>
@@ -12,8 +36,8 @@ while ($admin = $res->fetch_object()) {
     <nav class="navbar navbar-top navbar-expand-md navbar-light admin-navbar" id="navbar-main">
         <div class="container-fluid">
             <div class="admin-navbar-title">
-                <span class="admin-navbar-kicker">POS Admin</span>
-                <a class="admin-navbar-heading" href="dashboard.php"><?php echo htmlspecialchars($admin->admin_name); ?> Dashboard</a>
+                <a class="admin-navbar-heading" href="<?php echo htmlspecialchars($adminPageFile); ?>.php"><?php echo htmlspecialchars($adminPageTitle); ?></a>
+                <span class="admin-navbar-subtitle"><?php echo htmlspecialchars($admin->admin_name); ?></span>
             </div>
 
             <form class="admin-navbar-search d-none d-md-flex" role="search">
@@ -22,6 +46,9 @@ while ($admin = $res->fetch_object()) {
             </form>
 
             <div class="admin-navbar-actions ml-auto">
+                <a class="admin-icon-button" href="invo.php" title="Orders" aria-label="Orders">
+                    <i class="bi bi-cart3" aria-hidden="true"></i>
+                </a>
                 <a class="admin-icon-button" href="dashboard.php" title="Dashboard" aria-label="Dashboard">
                     <i class="bi bi-speedometer2" aria-hidden="true"></i>
                 </a>

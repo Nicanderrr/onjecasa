@@ -1,241 +1,459 @@
-
-	<?php
+<?php
 session_start();
 include('config/config.php');
 include('config/checklogin.php');
 include('config/code-generator.php');
 
-
-if (isset($_POST["submit"])) {
-	if (isset($_POST["submit"])) {
-		$order_code = $_POST["order_code"];
-		$cname = $_POST["cname"];
-		$grand_total = mysqli_real_escape_string($con, $_POST["grand_total"]);
-
-		$sql = "insert into invoice (cname,order_code,GRAND_TOTAL) values ('{$cname}','{$order_code}','{$grand_total}') ";
-		if ($con->query($sql)) {
-			$sid = $_POST['SID'];
-
-			$sql2 = "insert into invoice_products (SID,PNAME,PRICE,QTY,TOTAL) values ";
-			$rows = [];
-			for ($i = 0; $i < count($_POST["pname"]); $i++) {
-				$pname = mysqli_real_escape_string($con, $_POST["pname"][$i]);
-				$price = mysqli_real_escape_string($con, $_POST["price"][$i]);
-				$qty = mysqli_real_escape_string($con, $_POST["qty"][$i]);
-				$total = mysqli_real_escape_string($con, $_POST["total"][$i]);
-				$rows[] = "('{$sid}','{$pname}','{$price}','{$qty}','{$total}')";
-			}
-			$sql2 .= implode(",", $rows);
-			if ($con->query($sql2)) {
-				$success = "Order Submitted" && header("refresh:1; url=payments.php");
-		
-			} else {
-				echo "<div class='alert alert-danger'>Invoice Added Failed.</div>";
-			}
-		} else {
-			echo "<div class='alert alert-danger'>Invoice Added Failed.</div>";
-		}
-	}
-}
-		
-
 check_login();
 
+function invoice_h($value)
+{
+  return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+function invoice_product_image_src($image)
+{
+  $image = trim((string) $image);
+  if ($image !== '' && file_exists(__DIR__ . '/assets/img/products/' . $image)) {
+    return 'assets/img/products/' . rawurlencode($image);
+  }
+  return 'assets/img/products/place.png';
+}
+
+function invoice_row_html($products, $selectedName = '', $price = '', $qty = '1', $total = '')
+{
+  $selectedImage = 'assets/img/products/place.png';
+  foreach ($products as $prod) {
+    if ($selectedName === $prod->prod_name) {
+      $selectedImage = invoice_product_image_src($prod->prod_img);
+      break;
+    }
+  }
+
+  ob_start();
+  ?>
+  <tr class="invoice-line">
+    <td>
+      <div class="product-search-shell">
+        <i class="fas fa-search"></i>
+        <input type="search" class="form-control product-search-input" placeholder="Search product..." value="<?php echo invoice_h($selectedName); ?>" autocomplete="off">
+        <input type="hidden" class="product-select" name="pname[]" value="<?php echo invoice_h($selectedName); ?>">
+        <div class="product-search-menu" aria-hidden="true"></div>
+      </div>
+    </td>
+    <td>
+      <img src="<?php echo invoice_h($selectedImage); ?>" class="invoice-product-image" alt="Product image">
+    </td>
+    <td>
+      <input type="number" min="0" step="0.01" name="price[]" class="form-control price-input" value="<?php echo invoice_h($price); ?>" required>
+    </td>
+    <td>
+      <input type="number" min="1" step="1" name="qty[]" class="form-control qty-input" value="<?php echo invoice_h($qty); ?>" required>
+    </td>
+    <td>
+      <input type="number" min="0" step="0.01" name="total[]" class="form-control total-input" value="<?php echo invoice_h($total); ?>" readonly>
+    </td>
+    <td class="text-right">
+      <button type="button" class="btn btn-danger btn-sm btn-row-remove">
+        <i class="fas fa-times"></i>
+      </button>
+    </td>
+  </tr>
+  <?php
+  return ob_get_clean();
+}
+
+$products = [];
+$productPrices = [];
+$productImages = [];
+$productQuery = $mysqli->query("SELECT prod_name, prod_price, prod_img FROM rpos_products ORDER BY prod_name ASC");
+while ($productQuery && $row = $productQuery->fetch_object()) {
+  $products[] = $row;
+  $productPrices[$row->prod_name] = number_format((float) $row->prod_price, 2, '.', '');
+  $productImages[$row->prod_name] = invoice_product_image_src($row->prod_img);
+}
+
+$defaultOrderCode = $alpha . '-' . $beta;
+$orderCodeValue = $_POST['order_code'] ?? $defaultOrderCode;
+$renderRows = [];
+$subTotal = 0;
+$itemCount = 0;
+
+if (isset($_POST['submit'])) {
+  $order_code = trim((string) ($_POST['order_code'] ?? ''));
+  $productNames = $_POST['pname'] ?? [];
+  $prices = $_POST['price'] ?? [];
+  $quantities = $_POST['qty'] ?? [];
+
+  if ($order_code === '') {
+    $err = "Order code is required";
+  }
+
+  if (!isset($err)) {
+    for ($i = 0; $i < count($productNames); $i++) {
+      $name = trim((string) ($productNames[$i] ?? ''));
+      $price = trim((string) ($prices[$i] ?? ''));
+      $qty = trim((string) ($quantities[$i] ?? ''));
+
+      $linePrice = (float) $price;
+      $lineQty = (int) $qty;
+      $lineTotal = $linePrice * $lineQty;
+
+      $renderRows[] = [
+        'name' => $name,
+        'price' => $price,
+        'qty' => $qty !== '' ? $qty : '1',
+        'total' => number_format($lineTotal, 2, '.', ''),
+      ];
+
+      if ($name === '') {
+        continue;
+      }
+      if ($linePrice < 0 || $lineQty <= 0) {
+        $err = "Please enter valid product prices and quantities";
+        break;
+      }
+      $subTotal += $lineTotal;
+      $itemCount += $lineQty;
+    }
+  }
+
+  if (!isset($err) && $itemCount === 0) {
+    $err = "Add at least one product line";
+  }
+
+  if (!isset($err)) {
+    $mysqli->begin_transaction();
+    try {
+      $invoiceStmt = $mysqli->prepare("INSERT INTO invoice (cname, order_code, GRAND_TOTAL) VALUES ('', ?, ?)");
+      $invoiceStmt->bind_param('sd', $order_code, $subTotal);
+      if (!$invoiceStmt->execute()) {
+        throw new RuntimeException('Invoice insert failed');
+      }
+      $invoiceStmt->close();
+
+      $lineStmt = $mysqli->prepare("INSERT INTO invoice_products (SID, PNAME, PRICE, QTY, TOTAL) VALUES (?, ?, ?, ?, ?)");
+      foreach ($renderRows as $row) {
+        if ($row['name'] === '') {
+          continue;
+        }
+        $linePrice = (float) $row['price'];
+        $lineQty = (int) $row['qty'];
+        $lineTotal = $linePrice * $lineQty;
+        $priceValue = number_format($linePrice, 2, '.', '');
+        $totalValue = number_format($lineTotal, 2, '.', '');
+        $lineStmt->bind_param('sssss', $order_code, $row['name'], $priceValue, $row['qty'], $totalValue);
+        if (!$lineStmt->execute()) {
+          throw new RuntimeException('Line insert failed');
+        }
+      }
+      $lineStmt->close();
+
+      $mysqli->commit();
+      $success = "Order Submitted";
+      header("refresh:1; url=payments.php");
+      exit;
+    } catch (Throwable $e) {
+      $mysqli->rollback();
+      $err = "Invoice could not be saved";
+    }
+  }
+}
+
+if (empty($renderRows)) {
+  $renderRows[] = [
+    'name' => '',
+    'price' => '',
+    'qty' => '1',
+    'total' => '',
+  ];
+}
 
 require_once('partials/_head.php');
 ?>
-<html>
 
-	<body>
-
-
-
-
-
-<head>
- 
-</head>
 <body>
-
-  <!-- Sidenav -->
-  <?php
-  require_once('partials/_sidebar.php');
-  ?>
-  <!-- Main content -->
+  <?php require_once('partials/_sidebar.php'); ?>
   <div class="main-content">
-    <!-- Top navbar -->
-    <?php
-    require_once('partials/_topnav.php');
-    ?>
-    <!-- Header -->
-	<script src="https://code.jquery.com/jquery-3.6.0.min.js" ></script>
-		
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-		
-		<link rel='stylesheet' href='https://code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css'>
-		<script src="https://code.jquery.com/ui/1.13.0-rc.3/jquery-ui.min.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
-		
-	<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js" ></script> 
+    <?php require_once('partials/_topnav.php'); ?>
 
- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script> 
-
-
-    <div style="background-image: url(assets/img/theme/restro00.jpg); background-size: cover;" class="header  pb-8 pt-5 pt-md-8">
-    <span class="mask bg-gradient-dark opacity-8"></span>
-      <div class="container-fluid">
-        <div class="header-body">
-        </div>
-      </div>
-    </div>
-    <!-- Page content -->
-    <div class="container-fluid mt--8">
-      <!-- Table -->
-      <div class="row">
-        <div class="col">
-          <div class="card shadow">
-            <div class="card-header border-0">
-        
-		
-			<form method='post' action='invo.php'>
-				<div class='row'>
-					<div class='col-md-6'>
-						<h5 class='text-success'>Invoice Details</h5>
-						<div class='form-group'>
-					
-							<label>Order Code</label>
-							<input type='text' name='order_code' value="<?php echo $alpha?>-<?php echo $beta?>" required class='form-control'>
-						</div>
-						
-					</div>
-					<div class='col-md-6'>
-						<h5 class='text-success'>Customer Details</h5>
-						<div class='form-group'>
-							<label>Name</label>
-							<input type='text' name='cname' value = "<?= $customerID; ?>"  required class='form-control'>
-						</div>
-					
-					</div>
-				</div>
-				<div class='row'>
-					<div class='col-md-12'>
-						<h5 class='text-success'>Product Details</h5>
-						<table class='table'>
-							<thead>
-								<tr>
-									<th>Product</th>
-									<th>Price</th>
-									<th>Qty</th>
-									<th>Total</th>
-									<th>Action</th>
-								</tr>
-							</thead>
-							<tbody id='product_tbody'>
-								<tr>
-								<td><select class='form-control selectpicker' data-style="btn-grey" data-dropup-auto='false' data-live-search='true' name='pname[]' id='prodName' onchange='getPrice(this.value)'>
-                     		 <option>--Select Products--</option>
-									<?php
-						  $ret = 'SELECT * FROM  rpos_products';
-						  $stmt = $mysqli->prepare($ret);
-						  $stmt->execute();
-						  $res = $stmt->get_result();
-									while ($prod = $res->fetch_object()) {
-										?>
-								<option name='pname[]'  id='prodName'  class='form-control'> <?php echo $prod->prod_name ?> </option>
-									<?php } ?>
-								</select>
-								</td>
-								<input type="hidden" value="<?php echo $alpha?>-<?php echo $beta?>" name="SID">
-									<td><input type='text' required name='price[]'  id='priceI' class='form-control price'></td>
-									<td><input type='text' required name='qty[]' class='form-control qty'></td>
-									<td><input type='text' required name='total[]' class='form-control total'></td>
-									<td><input type='button' value='x' class='btn btn-danger btn-sm btn-row-remove'> </td>
-								</tr>
-							</tbody>
-							<tfoot>
-								<tr>
-									<td><input type='button' value='+ Add New Sale' class='btn btn-primary btn-sm p-2' id='btn-add-row'></td>
-									<td colspan='2' class='text-right'>Total</td>
-									<td><input type='text' name='grand_total' id='grand_total' class='form-control' required></td>
-								</tr>
-							</tfoot>
-						</table>
-						<hr>
-						<input type="submit" name="submit" value="Proceed" class="btn btn-success">
-					</div>
-				</div>
-			
-			</form>
-		
-
-                   
-
+    <div class="container-fluid mt-4 invoice-workspace">
+      <div class="invoice-builder-grid">
+        <form method="post" action="invo.php" class="invoice-builder-form" id="invoiceBuilderForm">
+          <div class="card shadow invoice-panel">
+            <div class="card-header border-0 invoice-panel-head">
+              <div>
+                <h3>Invoice Builder</h3>
+                <p>Select products, adjust quantities, and review totals before proceeding.</p>
+              </div>
+              <div class="invoice-order-chip">
+                <span>Order Code</span>
+                <strong><?php echo invoice_h($orderCodeValue); ?></strong>
+              </div>
             </div>
-           
+
+            <div class="invoice-toolbar">
+              <div class="invoice-toolbar-note">
+                <i class="fas fa-info-circle"></i>
+                Build the sale without collecting customer details.
+              </div>
+              <button type="button" class="btn btn-outline-primary" id="btn-add-row">
+                <i class="fas fa-plus"></i>
+                Add line
+              </button>
+            </div>
+
+            <input type="hidden" name="order_code" value="<?php echo invoice_h($orderCodeValue); ?>">
+
+            <div class="invoice-live-summary">
+              <div class="invoice-live-summary-item">
+                <span>Total Items</span>
+                <strong id="builderLineCount"><?php echo number_format($itemCount); ?></strong>
+              </div>
+              <div class="invoice-live-summary-item">
+                <span>Subtotal</span>
+                <strong id="builderSubtotal">&#8373; <?php echo number_format($subTotal, 2); ?></strong>
+              </div>
+              <div class="invoice-live-summary-item invoice-live-summary-total">
+                <span>Grand Total</span>
+                <strong id="builderGrandTotal">&#8373; <?php echo number_format($subTotal, 2); ?></strong>
+              </div>
+              <div class="invoice-live-summary-action">
+                <button type="submit" name="submit" class="btn btn-success btn-block invoice-submit-btn">
+                  <i class="fas fa-arrow-right"></i>
+                  Proceed
+                </button>
+              </div>
+            </div>
+
+            <div class="table-responsive invoice-table-wrap">
+              <table class="table align-items-center table-flush invoice-table">
+                <thead class="thead-light">
+                  <tr>
+                    <th scope="col">Product</th>
+                    <th scope="col">Image</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Qty</th>
+                    <th scope="col">Total</th>
+                    <th scope="col" class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="product_tbody">
+                  <?php foreach ($renderRows as $row) {
+                    echo invoice_row_html(
+                      $products,
+                      $row['name'],
+                      $row['price'],
+                      $row['qty'],
+                      $row['total']
+                    );
+                  } ?>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </form>
       </div>
-      <!-- Footer -->
-      <?php
-      require_once('partials/_footer.php');
-      ?>
+
+      <?php require_once('partials/_footer.php'); ?>
     </div>
   </div>
-  <!-- Argon Scripts -->
-  <?php
-//   require_once('partials/_scripts.php');
-  ?>
 
-			<script>
-			$(document).ready(function(){ 
+  <?php require_once('partials/_scripts.php'); ?>
+  <script>
+    $(function() {
+      const productPrices = <?php echo json_encode($productPrices); ?>;
+      const productImages = <?php echo json_encode($productImages); ?>;
+      const productPlaceholderImage = 'assets/img/products/place.png';
+      const productNames = Object.keys(productPrices);
+      const rowTemplate = () => `
+          <tr class="invoice-line">
+            <td>
+              <div class="product-search-shell">
+                <i class="fas fa-search"></i>
+                <input type="search" class="form-control product-search-input" placeholder="Search product..." autocomplete="off">
+                <input type="hidden" class="product-select" name="pname[]" value="">
+                <div class="product-search-menu" aria-hidden="true"></div>
+              </div>
+            </td>
+            <td>
+              <img src="${productPlaceholderImage}" class="invoice-product-image" alt="Product image">
+            </td>
+            <td><input type="number" min="0" step="0.01" name="price[]" class="form-control price-input" value="" required></td>
+            <td><input type="number" min="1" step="1" name="qty[]" class="form-control qty-input" value="1" required></td>
+            <td><input type="number" min="0" step="0.01" name="total[]" class="form-control total-input" value="" readonly></td>
+            <td class="text-right">
+              <button type="button" class="btn btn-danger btn-sm btn-row-remove">
+                <i class="fas fa-times"></i>
+              </button>
+            </td>
+          </tr>`;
 
-				
-				$("#btn-add-row").click(function(){
-var row="<tr><td><select class='form-control selectpicker' data-live-search='true' data-dropup-auto='false' data-style='btn-grey' name='pname[]' id='prodName' onchange='getPrice(this.value)'><option> --Select Products--</option><?php  $ret = 'SELECT * FROM  rpos_products'; $stmt = $mysqli->prepare($ret); $stmt->execute(); $res = $stmt->get_result();	while ($prod = $res->fetch_object()) {?><option name='pname[]' class='form-control'> <?php echo $prod->prod_name ?> </option><?php } ?></select></td><input type='hidden' value='<?php echo $alpha?>-<?php echo $beta?>' 'name='SID'><td><input type='text' required name='price[]'  id='priceI' class='form-control price'></td><td><input type='text' required name='qty[]' class='form-control qty'></td><td><input type='text' required name='total[]' class='form-control total'></td>	<td><input type='button' value='x' class='btn btn-danger btn-sm btn-row-remove'> </td></tr>";
-$("#product_tbody").prepend(row);
-	$('.selectpicker').selectpicker('refresh');
+      function updateSummary() {
+        let subtotal = 0;
+        let items = 0;
+        $('#product_tbody tr').each(function() {
+          const product = $(this).find('.product-select').val();
+          const price = parseFloat($(this).find('.price-input').val()) || 0;
+          const qty = parseFloat($(this).find('.qty-input').val()) || 0;
+          const total = price * qty;
+          if (product || price > 0) {
+            $(this).find('.total-input').val(total.toFixed(2));
+          } else {
+            $(this).find('.total-input').val('');
+          }
+          if (product) {
+            subtotal += total;
+            items += qty;
+          }
+        });
 
-});
-				
-				$("body").on("click",".btn-row-remove",function(){
-					
-						$(this).closest("tr").remove();
-						grand_total();
-	$('.selectpicker').selectpicker('refresh');
-					
-				});
+        $('#builderLineCount').text(items);
+        $('#builderSubtotal').html('&#8373; ' + subtotal.toFixed(2));
+        $('#builderGrandTotal').html('&#8373; ' + subtotal.toFixed(2));
+      }
 
-				$("body").on(".price",function(){
-					var price=Number($(this).val());
-					var qty=Number($(this).closest("tr").find(".qty").val());
-					$(this).closest("tr").find(".total").val(price*qty);
-					grand_total();
-				});
-				
-				$("body").on("keyup",".qty",function(){
-					var qty=Number($(this).val());
-					var price=Number($(this).closest("tr").find(".price").val());
-					$(this).closest("tr").find(".total").val(price*qty);
-					grand_total();
-				});			
-				
-				function grand_total(){
-					var tot=0;
-					$(".total").each(function(){
-						tot+=Number($(this).val());
-					});
-					$("#grand_total").val(tot);
-				}
-				
-				
-				
-			});
+      function recalcRow($row) {
+        const price = parseFloat($row.find('.price-input').val()) || 0;
+        const qty = parseFloat($row.find('.qty-input').val()) || 0;
+        $row.find('.total-input').val((price * qty).toFixed(2));
+        updateSummary();
+      }
 
-		</script>
+      function selectProduct(input, productName) {
+        const $currentRow = $(input).closest('tr');
+        const price = parseFloat(productPrices[productName]) || 0;
 
-	</body>
+        $(input).val(productName);
+        $currentRow.find('.product-select').val(productName);
+        $currentRow.find('.invoice-product-image').attr('src', productImages[productName] || productPlaceholderImage).attr('alt', productName);
+        $currentRow.find('.price-input').val(price.toFixed(2));
+        hideProductMenu($currentRow);
+        recalcRow($currentRow);
+
+        if ($currentRow.is($('#product_tbody tr').last())) {
+          addEmptyRow();
+        }
+      }
+
+      function clearProductRow($row) {
+        $row.find('.product-select').val('');
+        $row.find('.invoice-product-image').attr('src', productPlaceholderImage).attr('alt', 'Product image');
+        $row.find('.price-input').val('');
+        $row.find('.total-input').val('');
+        updateSummary();
+      }
+
+      function hideProductMenu($row) {
+        $row.find('.product-search-menu').empty().removeClass('is-open').attr('aria-hidden', 'true');
+      }
+
+      function renderProductMenu(input) {
+        const $currentRow = $(input).closest('tr');
+        const $menu = $currentRow.find('.product-search-menu');
+        const query = $.trim($(input).val()).toLowerCase();
+
+        if (!query) {
+          clearProductRow($currentRow);
+          hideProductMenu($currentRow);
+          return;
+        }
+
+        const matches = productNames.filter(function(name) {
+          return name.toLowerCase().indexOf(query) !== -1;
+        }).slice(0, 8);
+
+        if (!matches.length) {
+          clearProductRow($currentRow);
+          $menu.html('<div class="product-search-empty">No product found</div>').addClass('is-open').attr('aria-hidden', 'false');
+          return;
+        }
+
+        clearProductRow($currentRow);
+        $menu.html(matches.map(function(name) {
+          const price = parseFloat(productPrices[name]) || 0;
+          return '<button type="button" class="product-search-option" data-product="' + $('<div>').text(name).html() + '">' +
+            '<span>' + $('<div>').text(name).html() + '</span>' +
+            '<strong>&#8373; ' + price.toFixed(2) + '</strong>' +
+          '</button>';
+        }).join('')).addClass('is-open').attr('aria-hidden', 'false');
+      }
+
+      function handleProductSearch(input) {
+        const $currentRow = $(input).closest('tr');
+        const productName = $.trim($(input).val());
+        if (!productName) {
+          clearProductRow($currentRow);
+          hideProductMenu($currentRow);
+          return;
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(productPrices, productName)) {
+          renderProductMenu(input);
+          return;
+        }
+
+        selectProduct(input, productName);
+      }
+
+      $('#product_tbody')
+        .off('input focus', '.product-search-input')
+        .on('input focus', '.product-search-input', function() {
+          renderProductMenu(this);
+        });
+
+      $('#product_tbody')
+        .off('change blur', '.product-search-input')
+        .on('change blur', '.product-search-input', function() {
+          const input = this;
+          setTimeout(function() {
+            handleProductSearch(input);
+            hideProductMenu($(input).closest('tr'));
+          }, 120);
+        });
+
+      $('#product_tbody')
+        .off('mousedown', '.product-search-option')
+        .on('mousedown', '.product-search-option', function(event) {
+          event.preventDefault();
+          const $row = $(this).closest('tr');
+          selectProduct($row.find('.product-search-input')[0], $(this).data('product'));
+        });
+
+      $('#product_tbody')
+        .off('input', '.price-input, .qty-input')
+        .on('input', '.price-input, .qty-input', function() {
+          recalcRow($(this).closest('tr'));
+        });
+
+      $('#product_tbody')
+        .off('click', '.btn-row-remove')
+        .on('click', '.btn-row-remove', function() {
+          if ($('#product_tbody tr').length > 1) {
+            $(this).closest('tr').remove();
+            updateSummary();
+          }
+        });
+
+      function addEmptyRow() {
+        const rowHtml = rowTemplate();
+        $('#product_tbody').append(rowHtml);
+        updateSummary();
+      }
+
+      $('#product_tbody .product-search-input').each(function() {
+        if ($(this).val() && !$(this).closest('tr').find('.price-input').val()) {
+          handleProductSearch(this);
+        }
+      });
+
+      $('#btn-add-row').on('click', function() {
+        addEmptyRow();
+      });
+
+      updateSummary();
+    });
+  </script>
+</body>
+
 </html>
