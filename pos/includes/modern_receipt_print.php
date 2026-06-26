@@ -1,6 +1,5 @@
 <?php
-$receiptId = $_GET['id'] ?? '';
-$receiptId = trim($receiptId);
+$receiptId = trim((string) ($_GET['id'] ?? ''));
 
 if ($receiptId === '') {
     http_response_code(400);
@@ -18,11 +17,17 @@ function receipt_text($value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+function receipt_qty($value): string
+{
+    return rtrim(rtrim(number_format((float) $value, 2), '0'), '.');
+}
+
 $company = [
     'company' => 'Command Center POS',
     'address' => '172 Banana Street',
     'city' => 'Accra',
     'phone' => '(+233) 337-337-3069',
+    'command_center_image' => '',
 ];
 
 $invoice = [
@@ -38,7 +43,7 @@ $paymentReference = 'Not recorded';
 $paidAt = '';
 $salesPerson = $receiptSalesPerson ?? '';
 
-$stmt = $mysqli->prepare('SELECT company, address, city, phone FROM company_info LIMIT 1');
+$stmt = $mysqli->prepare('SELECT company, address, city, phone, command_center_image FROM company_info LIMIT 1');
 if ($stmt) {
     $stmt->execute();
     $result = $stmt->get_result();
@@ -112,14 +117,28 @@ if ($subTotal <= 0) {
 
 $grandTotal = (float) $invoice['total_amt'];
 $itemCount = array_sum(array_column($products, 'qty'));
+$lineCount = count($products);
 $receiptInitials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company['company']), 0, 2)) ?: 'POS';
+$receiptLogo = trim((string) ($company['command_center_image'] ?? ''));
+if ($receiptLogo !== '' && !preg_match('/^https?:\/\//i', $receiptLogo) && strpos($receiptLogo, '/') === 0) {
+    $receiptLogo = ltrim($receiptLogo, '/');
+}
+if ($receiptLogo !== '' && !preg_match('/^https?:\/\//i', $receiptLogo) && strpos($receiptLogo, 'assets/') === 0) {
+    $receiptLogo = strpos($_SERVER['PHP_SELF'] ?? '', '/cashier/') !== false ? '../admin/' . $receiptLogo : $receiptLogo;
+}
 $verificationSeed = $invoice['invoice_no'] . '|' . $grandTotal . '|' . $paymentReference;
 $verificationCode = strtoupper(substr(hash('sha256', $verificationSeed), 0, 12));
-$qrHash = hash('sha256', $verificationSeed . '|qr');
-$qrCells = [];
-for ($i = 0; $i < 81; $i++) {
-    $qrCells[] = hexdec($qrHash[$i % strlen($qrHash)]) % 2 === 0;
-}
+$shortReference = $paymentReference !== 'Not recorded' ? substr($paymentReference, 0, 18) : 'Manual entry';
+$generatedAt = date('d M Y, g:i A');
+$verificationPayload = implode("\n", [
+    $company['company'] . ' Receipt',
+    'Receipt: ' . $invoice['invoice_no'],
+    'Total: GHS ' . receipt_money($grandTotal),
+    'Paid: ' . ($paidAt ?: $invoice['invoice_date']),
+    'Verification: ' . $verificationCode,
+]);
+$qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=10&data=' . rawurlencode($verificationPayload);
+$barcodeImageUrl = 'https://bwipjs-api.metafloor.com/?bcid=code128&scale=2&height=12&includetext&text=' . rawurlencode($invoice['invoice_no']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -129,16 +148,18 @@ for ($i = 0; $i < 81; $i++) {
   <title>Receipt #<?php echo receipt_text($invoice['invoice_no']); ?></title>
   <style>
     :root {
-      --ink: #182230;
-      --muted: #667085;
-      --line: #e7edf5;
-      --paper: #ffffff;
-      --soft: #f6f8fb;
-      --brand: #2563eb;
-      --brand-dark: #163b8f;
+      --ink: #111827;
+      --muted: #64748b;
+      --line: #dbe4ef;
+      --paper: #fffefa;
+      --panel: #ffffff;
+      --soft: #f6f9fc;
+      --navy: #0f172a;
+      --blue: #2563eb;
+      --cyan: #0891b2;
       --green: #10b981;
-      --gold: #f59e0b;
-      --danger: #ef4444;
+      --amber: #d97706;
+      --red: #e11d48;
     }
 
     * {
@@ -149,9 +170,10 @@ for ($i = 0; $i < 81; $i++) {
       margin: 0;
       color: var(--ink);
       background:
-        radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 34rem),
-        linear-gradient(135deg, #eef4ff 0%, #f8fafc 52%, #edfdf6 100%);
-      font-family: Inter, "Segoe UI", Arial, sans-serif;
+        linear-gradient(135deg, rgba(37, 99, 235, 0.14), transparent 34rem),
+        linear-gradient(315deg, rgba(16, 185, 129, 0.13), transparent 30rem),
+        #eef3f8;
+      font-family: Constantia, "Times New Roman", serif;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
@@ -159,409 +181,547 @@ for ($i = 0; $i < 81; $i++) {
     .print-actions {
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 20;
       display: flex;
       justify-content: center;
       gap: 0.75rem;
       padding: 1rem;
-      backdrop-filter: blur(14px);
-      background: rgba(246, 248, 251, 0.78);
-      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+      background: rgba(248, 250, 252, 0.82);
+      backdrop-filter: blur(16px);
     }
 
     .print-actions button,
     .print-actions a {
       display: inline-flex;
+      min-height: 42px;
       align-items: center;
       justify-content: center;
-      min-height: 42px;
       padding: 0 1.2rem;
-      color: #fff;
-      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
-      border: 0;
+      border: 1px solid transparent;
       border-radius: 8px;
-      box-shadow: 0 14px 28px rgba(37, 99, 235, 0.25);
-      font-size: 0.92rem;
-      font-weight: 800;
+      font-family: inherit;
+      font-size: 0.96rem;
+      font-weight: 600;
       text-decoration: none;
       cursor: pointer;
     }
 
-    .print-actions a {
-      color: var(--ink);
-      background: #fff;
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+    .print-actions button {
+      color: #fff;
+      background: var(--navy);
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.22);
     }
 
-    .receipt-shell {
-      width: min(960px, calc(100% - 32px));
+    .print-actions a {
+      color: var(--navy);
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .receipt-stage {
+      width: min(1040px, calc(100% - 32px));
       margin: 2rem auto;
-      padding: 1rem;
     }
 
     .receipt {
       position: relative;
       overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.34);
+      border-radius: 8px;
       background: var(--paper);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 18px;
-      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.16);
+      box-shadow: 0 34px 90px rgba(15, 23, 42, 0.18);
+    }
+
+    .receipt::before,
+    .receipt::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      left: 0;
+      height: 10px;
+      background: repeating-linear-gradient(90deg, var(--navy) 0 22px, var(--blue) 22px 38px, var(--green) 38px 54px, var(--amber) 54px 70px);
     }
 
     .receipt::before {
-      content: "PAID";
-      position: absolute;
-      right: -1.6rem;
-      top: 7.6rem;
-      z-index: 1;
-      color: rgba(16, 185, 129, 0.08);
-      font-size: 8rem;
-      font-weight: 900;
-      letter-spacing: 0.04em;
-      transform: rotate(-14deg);
-      pointer-events: none;
+      top: 0;
     }
 
-    .receipt-hero {
-      position: relative;
+    .receipt::after {
+      bottom: 0;
+    }
+
+    .receipt-header {
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 2rem;
-      padding: 2rem;
-      color: #fff;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.48fr);
+      gap: 1.4rem;
+      padding: 2.2rem 2.2rem 1.4rem;
       background:
-        linear-gradient(135deg, rgba(22, 59, 143, 0.95), rgba(37, 99, 235, 0.92)),
-        repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 12px);
+        linear-gradient(135deg, #ffffff 0%, #f8fbff 62%, #eef6ff 100%);
     }
 
-    .brand-row {
-      display: flex;
+    .brand-block {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 1rem;
       align-items: center;
-      gap: 0.9rem;
+      min-width: 0;
     }
 
     .brand-mark {
       display: grid;
-      width: 58px;
-      height: 58px;
+      width: 72px;
+      height: 72px;
       place-items: center;
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.16);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.24);
-      font-weight: 900;
-      letter-spacing: 0.04em;
+      overflow: hidden;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      background: #eff6ff;
+      color: var(--blue);
+      font-size: 1.28rem;
+      font-weight: 600;
+      box-shadow: inset 0 0 0 6px #fff, 0 16px 30px rgba(37, 99, 235, 0.14);
+    }
+
+    .brand-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .brand-name {
       margin: 0;
-      font-size: clamp(1.6rem, 3vw, 2.35rem);
-      line-height: 1.05;
-      letter-spacing: 0;
+      color: var(--navy);
+      font-size: clamp(1.9rem, 4vw, 3.2rem);
+      font-weight: 600;
+      line-height: 0.98;
     }
 
     .brand-meta {
-      margin: 0.55rem 0 0;
+      margin: 0.75rem 0 0;
       max-width: 35rem;
-      color: rgba(255, 255, 255, 0.82);
-      font-size: 0.95rem;
-      line-height: 1.7;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.55;
     }
 
-    .receipt-badge {
-      align-self: start;
-      min-width: 190px;
-      padding: 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.15);
-      text-align: right;
+    .receipt-status {
+      display: grid;
+      align-content: space-between;
+      gap: 1rem;
+      min-height: 190px;
+      padding: 1.15rem;
+      border: 1px solid #cfe0f4;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
     }
 
-    .receipt-badge span {
+    .paid-chip {
       display: inline-flex;
-      margin-bottom: 0.65rem;
-      padding: 0.35rem 0.65rem;
+      width: fit-content;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.42rem 0.72rem;
+      border: 1px solid #bbf7d0;
       border-radius: 999px;
-      background: rgba(16, 185, 129, 0.18);
-      color: #d1fae5;
-      font-size: 0.72rem;
-      font-weight: 900;
+      color: #047857;
+      background: #ecfdf5;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .paid-chip i {
+      width: 0.55rem;
+      height: 0.55rem;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.16);
+    }
+
+    .receipt-number span,
+    .receipt-number strong {
+      display: block;
+    }
+
+    .receipt-number span {
+      color: var(--muted);
+      font-size: 0.78rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
-    .receipt-badge strong {
-      display: block;
-      font-size: 1.05rem;
+    .receipt-number strong {
+      margin-top: 0.3rem;
+      color: var(--navy);
+      font-size: 1.35rem;
+      font-weight: 600;
       word-break: break-word;
+    }
+
+    .grand-total-panel {
+      padding: 1rem;
+      border-radius: 8px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--navy), #1e3a8a 56%, var(--blue));
+    }
+
+    .grand-total-panel span {
+      display: block;
+      opacity: 0.78;
+      font-size: 0.82rem;
+    }
+
+    .grand-total-panel strong {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 2rem;
+      font-weight: 600;
+      line-height: 1.05;
     }
 
     .receipt-body {
-      position: relative;
-      z-index: 2;
-      padding: 2rem;
+      padding: 0 2.2rem 2.2rem;
     }
 
-    .detail-grid {
+    .meta-strip {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0.8rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.15rem;
     }
 
-    .detail-card {
-      min-height: 92px;
-      padding: 1rem;
+    .meta-card {
+      min-width: 0;
+      padding: 0.95rem;
       border: 1px solid var(--line);
-      border-radius: 12px;
-      background: var(--soft);
+      border-radius: 8px;
+      background: #fff;
     }
 
-    .detail-card span {
+    .meta-card span {
       display: block;
-      margin-bottom: 0.35rem;
       color: var(--muted);
-      font-size: 0.72rem;
-      font-weight: 900;
+      font-size: 0.74rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
-    .detail-card strong {
+    .meta-card strong {
       display: block;
-      font-size: 0.98rem;
-      line-height: 1.35;
+      overflow: hidden;
+      margin-top: 0.35rem;
+      color: var(--navy);
+      font-size: 1rem;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .payment-ribbon {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1.15rem;
+      padding: 1rem;
+      border: 1px solid #c7d2fe;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #eef2ff, #f8fafc);
+    }
+
+    .payment-icon {
+      display: grid;
+      width: 46px;
+      height: 46px;
+      place-items: center;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--blue);
+      font-weight: 600;
+    }
+
+    .payment-ribbon span,
+    .verification-card span,
+    .totals-card span {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .payment-ribbon strong {
+      display: block;
+      margin-top: 0.18rem;
+      color: var(--navy);
+      font-size: 1.02rem;
+      font-weight: 600;
       word-break: break-word;
+    }
+
+    .items-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .items-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.1rem;
+      border-bottom: 1px solid var(--line);
+      background: #f8fafc;
+    }
+
+    .items-head h2 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .items-head p {
+      margin: 0.2rem 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .item-count-pill {
+      align-self: center;
+      padding: 0.4rem 0.65rem;
+      border: 1px solid #bae6fd;
+      border-radius: 999px;
+      color: #075985;
+      background: #f0f9ff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
     }
 
     .items-table {
       width: 100%;
-      overflow: hidden;
-      border-collapse: separate;
-      border-spacing: 0;
-      border: 1px solid var(--line);
-      border-radius: 14px;
+      border-collapse: collapse;
+    }
+
+    .items-table th,
+    .items-table td {
+      padding: 0.95rem 1.1rem;
+      border-bottom: 1px solid #edf2f7;
+      vertical-align: top;
     }
 
     .items-table th {
-      padding: 0.85rem 0.95rem;
-      color: #475467;
-      background: #f1f5f9;
-      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      background: #fff;
       font-size: 0.72rem;
-      font-weight: 900;
+      font-weight: 600;
       letter-spacing: 0.08em;
       text-align: left;
       text-transform: uppercase;
-    }
-
-    .items-table td {
-      padding: 1rem 0.95rem;
-      border-bottom: 1px solid var(--line);
-      font-size: 0.93rem;
-      vertical-align: top;
     }
 
     .items-table tr:last-child td {
       border-bottom: 0;
     }
 
-    .items-table .num {
+    .item-main {
+      display: grid;
+      gap: 0.18rem;
+    }
+
+    .item-main strong {
+      color: var(--navy);
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .item-main span {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .num {
       text-align: right;
       white-space: nowrap;
     }
 
-    .product-name {
-      font-weight: 800;
+    .item-total {
+      color: var(--navy);
+      font-weight: 600;
     }
 
-    .receipt-bottom {
+    .receipt-lower {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 330px;
-      gap: 1.25rem;
-      margin-top: 1.5rem;
+      grid-template-columns: minmax(0, 1fr) 350px;
+      gap: 1rem;
+      margin-top: 1rem;
       align-items: start;
     }
 
-    .note-card,
-    .summary-card,
-    .verify-card {
+    .verification-card,
+    .totals-card,
+    .thank-you-card {
       border: 1px solid var(--line);
-      border-radius: 14px;
+      border-radius: 8px;
       background: #fff;
     }
 
-    .note-card {
-      padding: 1.2rem;
-    }
-
-    .note-card h4 {
-      margin: 0 0 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    .note-card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.65;
-    }
-
-    .barcode {
-      display: flex;
-      align-items: end;
-      gap: 3px;
-      height: 46px;
-      margin-top: 1rem;
-    }
-
-    .barcode i {
-      display: block;
-      width: 5px;
-      background: #111827;
-      border-radius: 2px 2px 0 0;
-    }
-
-    .barcode i:nth-child(2n) { height: 68%; }
-    .barcode i:nth-child(3n) { height: 84%; }
-    .barcode i:nth-child(4n) { height: 52%; }
-    .barcode i:nth-child(5n) { height: 100%; }
-
-    .verify-grid {
+    .verification-card {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: 1rem;
-      align-items: center;
-      margin-top: 1rem;
       padding: 1rem;
-      border: 1px dashed #cbd5e1;
-      border-radius: 12px;
+    }
+
+    .verification-card h3,
+    .thank-you-card h3 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .verification-code {
+      display: inline-flex;
+      margin-top: 0.7rem;
+      padding: 0.45rem 0.65rem;
+      border: 1px dashed #94a3b8;
+      border-radius: 8px;
+      color: var(--navy);
       background: #f8fafc;
-    }
-
-    .verify-grid span {
-      display: block;
-      color: var(--muted);
-      font-size: 0.72rem;
-      font-weight: 900;
+      font-weight: 600;
       letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .verify-grid strong {
-      display: block;
-      margin-top: 0.25rem;
-      color: var(--ink);
-      font-size: 0.95rem;
-      word-break: break-word;
     }
 
     .qr-mark {
       display: grid;
-      grid-template-columns: repeat(9, 6px);
-      grid-template-rows: repeat(9, 6px);
-      gap: 2px;
-      padding: 0.45rem;
-      border: 1px solid #d7deea;
-      border-radius: 10px;
+      place-items: center;
+      padding: 0.55rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
       background: #fff;
     }
 
-    .qr-mark i {
+    .qr-mark img {
       display: block;
-      width: 6px;
-      height: 6px;
-      border-radius: 1px;
-      background: #e2e8f0;
+      width: 104px;
+      height: 104px;
+      object-fit: contain;
     }
 
-    .qr-mark i.is-on {
-      background: #111827;
+    .thank-you-card {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: linear-gradient(135deg, #ffffff, #f8fafc);
     }
 
-    .summary-card {
+    .thank-you-card p {
+      margin: 0.45rem 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .barcode {
+      display: block;
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .barcode img {
+      display: block;
+      width: 100%;
+      max-width: 360px;
+      height: 62px;
+      object-fit: contain;
+    }
+
+    .totals-card {
       overflow: hidden;
     }
 
-    .summary-line {
+    .total-line {
       display: flex;
       justify-content: space-between;
       gap: 1rem;
-      padding: 0.9rem 1rem;
+      padding: 0.88rem 1rem;
       border-bottom: 1px solid var(--line);
       color: var(--muted);
-      font-weight: 700;
     }
 
-    .summary-line strong {
-      color: var(--ink);
+    .total-line strong {
+      color: var(--navy);
+      font-weight: 600;
     }
 
-    .summary-total {
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 1.1rem 1rem;
+    .total-paid {
+      padding: 1rem;
       color: #fff;
-      background: linear-gradient(135deg, var(--brand-dark), var(--brand));
-      font-weight: 900;
+      background: linear-gradient(135deg, var(--green), #047857);
     }
 
-    .summary-total strong {
-      font-size: 1.35rem;
+    .total-paid span,
+    .total-paid strong {
+      display: block;
     }
 
-    .payment-pill {
-      display: inline-flex;
-      align-items: center;
-      min-height: 28px;
-      padding: 0 0.65rem;
-      border-radius: 999px;
-      color: #065f46;
-      background: #d1fae5;
-      font-size: 0.78rem;
-      font-weight: 900;
+    .total-paid span {
+      opacity: 0.86;
+      font-size: 0.9rem;
+    }
+
+    .total-paid strong {
+      margin-top: 0.2rem;
+      font-size: 2rem;
+      font-weight: 600;
+      line-height: 1.05;
     }
 
     .receipt-footer {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 1rem;
-      align-items: center;
-      padding: 1.35rem 2rem;
-      border-top: 1px dashed #cbd5e1;
-      background: #fbfdff;
+      display: block;
+      padding: 1.2rem 2.2rem 2.2rem;
       color: var(--muted);
-      font-size: 0.88rem;
+      font-size: 0.9rem;
+      text-align: right;
     }
 
-    .signature {
-      min-width: 220px;
-      padding-top: 0.6rem;
-      border-top: 1px solid #98a2b3;
-      color: var(--ink);
-      font-weight: 800;
-      text-align: center;
-    }
-
-    @media (max-width: 760px) {
-      .receipt-hero,
-      .receipt-bottom,
-      .receipt-footer {
+    @media (max-width: 820px) {
+      .receipt-header,
+      .receipt-lower,
+      .payment-ribbon {
         grid-template-columns: 1fr;
       }
 
-      .receipt-badge {
-        text-align: left;
+      .meta-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .receipt-stage {
+        width: min(100% - 16px, 1040px);
+        margin: 0.75rem auto;
       }
 
-      .detail-grid {
-        grid-template-columns: repeat(2, 1fr);
+      .receipt-header,
+      .receipt-body,
+      .receipt-footer {
+        padding-right: 1rem;
+        padding-left: 1rem;
       }
 
-      .items-table {
-        font-size: 0.85rem;
+      .brand-block,
+      .meta-strip,
+      .verification-card {
+        grid-template-columns: 1fr;
+      }
+
+      .items-table th:nth-child(3),
+      .items-table td:nth-child(3) {
+        display: none;
       }
     }
 
@@ -573,17 +733,16 @@ for ($i = 0; $i < 81; $i++) {
 
       body {
         background: #fff;
-        font-size: 11px;
+        font-size: 10.5px;
       }
 
       .print-actions {
         display: none;
       }
 
-      .receipt-shell {
+      .receipt-stage {
         width: 100%;
         margin: 0;
-        padding: 0;
       }
 
       .receipt {
@@ -592,60 +751,77 @@ for ($i = 0; $i < 81; $i++) {
         box-shadow: none;
       }
 
-      .receipt-hero {
+      .receipt::before,
+      .receipt::after {
+        height: 4px;
+      }
+
+      .receipt-header,
+      .receipt-body,
+      .receipt-footer {
+        padding-right: 0;
+        padding-left: 0;
+      }
+
+      .receipt-header,
+      .meta-strip,
+      .payment-ribbon,
+      .receipt-lower,
+      .receipt-footer,
+      .verification-card {
         grid-template-columns: 1fr;
-        gap: 1rem;
-        padding: 1rem;
-        border-radius: 0;
+      }
+
+      .receipt-header {
+        padding-top: 0.8rem;
+      }
+
+      .brand-block {
+        grid-template-columns: auto 1fr;
       }
 
       .brand-mark {
-        width: 42px;
-        height: 42px;
-        border-radius: 10px;
+        width: 46px;
+        height: 46px;
       }
 
       .brand-name {
-        font-size: 1.15rem;
+        font-size: 1.28rem;
       }
 
       .brand-meta,
-      .receipt-badge,
-      .detail-card strong,
+      .meta-card strong,
+      .payment-ribbon strong,
       .items-table td,
-      .note-card p,
+      .thank-you-card p,
       .receipt-footer {
         font-size: 0.72rem;
       }
 
-      .receipt-body {
-        padding: 1rem 0;
-      }
-
-      .detail-grid,
-      .receipt-bottom,
-      .receipt-footer {
-        grid-template-columns: 1fr;
-      }
-
-      .detail-card,
-      .note-card,
-      .summary-card {
-        border-radius: 0;
-      }
-
-      .items-table {
-        border-right: 0;
-        border-left: 0;
-        border-radius: 0;
-      }
-
-      .items-table tr,
-      .detail-card,
-      .summary-card,
-      .note-card {
+      .receipt-status,
+      .meta-card,
+      .payment-ribbon,
+      .items-card,
+      .verification-card,
+      .thank-you-card,
+      .totals-card {
         break-inside: avoid;
+        border-radius: 0;
+        box-shadow: none;
       }
+
+      .items-table th,
+      .items-table td {
+        padding: 0.55rem 0.35rem;
+      }
+
+      .items-head,
+      .total-line,
+      .total-paid {
+        padding-right: 0.55rem;
+        padding-left: 0.55rem;
+      }
+
     }
   </style>
 </head>
@@ -655,128 +831,161 @@ for ($i = 0; $i < 81; $i++) {
     <a href="receipts.php">Back to Receipts</a>
   </div>
 
-  <main class="receipt-shell">
+  <main class="receipt-stage">
     <section class="receipt">
-      <header class="receipt-hero">
-        <div>
-          <div class="brand-row">
-            <div class="brand-mark"><?php echo receipt_text($receiptInitials); ?></div>
-            <div>
-              <h1 class="brand-name"><?php echo receipt_text($company['company']); ?></h1>
-              <p class="brand-meta">
-                <?php echo receipt_text($company['address']); ?>, <?php echo receipt_text($company['city']); ?><br>
-                <?php echo receipt_text($company['phone']); ?>
-              </p>
-            </div>
+      <header class="receipt-header">
+        <div class="brand-block">
+          <div class="brand-mark">
+            <?php if ($receiptLogo !== '') { ?>
+              <img src="<?php echo receipt_text($receiptLogo); ?>" alt="<?php echo receipt_text($company['company']); ?> logo">
+            <?php } else { ?>
+              <?php echo receipt_text($receiptInitials); ?>
+            <?php } ?>
+          </div>
+          <div>
+            <h1 class="brand-name"><?php echo receipt_text($company['company']); ?></h1>
+            <p class="brand-meta">
+              <?php echo receipt_text($company['address']); ?>, <?php echo receipt_text($company['city']); ?><br>
+              <?php echo receipt_text($company['phone']); ?>
+            </p>
           </div>
         </div>
-        <aside class="receipt-badge">
-          <span>Paid receipt</span>
-          <strong>#<?php echo receipt_text($invoice['invoice_no']); ?></strong>
+
+        <aside class="receipt-status">
+          <span class="paid-chip"><i></i> Payment confirmed</span>
+          <div class="receipt-number">
+            <span>Receipt number</span>
+            <strong>#<?php echo receipt_text($invoice['invoice_no']); ?></strong>
+          </div>
+          <div class="grand-total-panel">
+            <span>Total received</span>
+            <strong>&#8373;<?php echo receipt_money($grandTotal); ?></strong>
+          </div>
         </aside>
       </header>
 
       <div class="receipt-body">
-        <section class="detail-grid">
-          <div class="detail-card">
+        <section class="meta-strip">
+          <div class="meta-card">
             <span>Customer</span>
             <strong><?php echo receipt_text($invoice['customer']); ?></strong>
           </div>
-          <div class="detail-card">
+          <div class="meta-card">
             <span>Date issued</span>
             <strong><?php echo receipt_text($invoice['invoice_date']); ?></strong>
           </div>
-          <div class="detail-card">
-            <span>Sales person</span>
+          <div class="meta-card">
+            <span>Sold by</span>
             <strong><?php echo receipt_text($salesPerson ?: 'Not recorded'); ?></strong>
           </div>
-          <div class="detail-card">
-            <span>Payment</span>
-            <strong><span class="payment-pill"><?php echo receipt_text($paymentMethod); ?></span></strong>
-          </div>
-          <div class="detail-card">
-            <span>Payment Ref</span>
-            <strong><?php echo receipt_text($paymentReference); ?></strong>
-          </div>
-          <div class="detail-card">
-            <span>Paid At</span>
-            <strong><?php echo receipt_text($paidAt ?: $invoice['invoice_date']); ?></strong>
+          <div class="meta-card">
+            <span>Generated</span>
+            <strong><?php echo receipt_text($generatedAt); ?></strong>
           </div>
         </section>
 
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th class="num">Unit Price</th>
-              <th class="num">Qty</th>
-              <th class="num">Line Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php foreach ($products as $product) { ?>
-              <tr>
-                <td><span class="product-name"><?php echo receipt_text($product['name']); ?></span></td>
-                <td class="num">&#8373;<?php echo receipt_money($product['price']); ?></td>
-                <td class="num"><?php echo receipt_text(rtrim(rtrim(number_format($product['qty'], 2), '0'), '.')); ?></td>
-                <td class="num">&#8373;<?php echo receipt_money($product['total']); ?></td>
-              </tr>
-            <?php } ?>
-          </tbody>
-        </table>
+        <section class="payment-ribbon">
+          <div class="payment-icon">&#8373;</div>
+          <div>
+            <span>Payment method</span>
+            <strong><?php echo receipt_text($paymentMethod); ?></strong>
+          </div>
+          <div>
+            <span>Reference</span>
+            <strong><?php echo receipt_text($shortReference); ?></strong>
+          </div>
+        </section>
 
-        <section class="receipt-bottom">
-          <div class="note-card">
-            <h4>Thank you for your purchase.</h4>
-            <p>This receipt confirms that payment was received for the listed items. Keep it for returns, reconciliation, and customer service reference.</p>
-            <div class="barcode" aria-hidden="true">
-              <?php for ($i = 0; $i < 34; $i++) { ?><i></i><?php } ?>
+        <section class="items-card">
+          <div class="items-head">
+            <div>
+              <h2>Purchased Items</h2>
+              <p><?php echo receipt_text($lineCount); ?> line item<?php echo $lineCount === 1 ? '' : 's'; ?> on this receipt.</p>
             </div>
-            <div class="verify-grid">
+            <span class="item-count-pill"><?php echo receipt_text(receipt_qty($itemCount)); ?> total qty</span>
+          </div>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th class="num">Unit</th>
+                <th class="num">Qty</th>
+                <th class="num">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($products as $index => $product) { ?>
+                <tr>
+                  <td>
+                    <div class="item-main">
+                      <strong><?php echo receipt_text($product['name']); ?></strong>
+                      <span>Line <?php echo receipt_text($index + 1); ?> of <?php echo receipt_text($lineCount); ?></span>
+                    </div>
+                  </td>
+                  <td class="num">&#8373;<?php echo receipt_money($product['price']); ?></td>
+                  <td class="num"><?php echo receipt_text(receipt_qty($product['qty'])); ?></td>
+                  <td class="num item-total">&#8373;<?php echo receipt_money($product['total']); ?></td>
+                </tr>
+              <?php } ?>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="receipt-lower">
+          <div>
+            <div class="verification-card">
               <div>
-                <span>Verification Code</span>
-                <strong><?php echo receipt_text($verificationCode); ?></strong>
+                <span>Verification</span>
+                <h3>Authentic paid receipt</h3>
+                <div class="verification-code"><?php echo receipt_text($verificationCode); ?></div>
               </div>
-              <div class="qr-mark" aria-label="Receipt verification code">
-                <?php foreach ($qrCells as $isOn) { ?><i class="<?php echo $isOn ? 'is-on' : ''; ?>"></i><?php } ?>
+              <div class="qr-mark" aria-label="Receipt verification pattern">
+                <img src="<?php echo receipt_text($qrImageUrl); ?>" alt="QR code for receipt <?php echo receipt_text($invoice['invoice_no']); ?>">
+              </div>
+            </div>
+
+            <div class="thank-you-card">
+              <h3>Thank you for shopping with us.</h3>
+              <p>This receipt confirms payment for the listed items. Keep it for returns, reconciliation, warranty checks, and customer support.</p>
+              <div class="barcode">
+                <img src="<?php echo receipt_text($barcodeImageUrl); ?>" alt="Barcode for receipt <?php echo receipt_text($invoice['invoice_no']); ?>">
               </div>
             </div>
           </div>
 
-          <div class="summary-card">
-            <div class="summary-line">
-              <span>Items</span>
-              <strong><?php echo receipt_text(rtrim(rtrim(number_format($itemCount, 2), '0'), '.')); ?></strong>
-            </div>
-            <div class="summary-line">
+          <aside class="totals-card">
+            <div class="total-line">
               <span>Subtotal</span>
               <strong>&#8373;<?php echo receipt_money($subTotal); ?></strong>
             </div>
-            <div class="summary-line">
+            <div class="total-line">
               <span>Discount</span>
               <strong>&#8373;0.00</strong>
             </div>
-            <div class="summary-line">
+            <div class="total-line">
               <span>Tax / VAT</span>
               <strong>&#8373;0.00</strong>
             </div>
-            <div class="summary-total">
+            <div class="total-paid">
               <span>Total Paid</span>
               <strong>&#8373;<?php echo receipt_money($grandTotal); ?></strong>
             </div>
-            <div class="summary-line">
+            <div class="total-line">
               <span>Balance</span>
               <strong>&#8373;0.00</strong>
             </div>
-          </div>
+            <div class="total-line">
+              <span>Paid at</span>
+              <strong><?php echo receipt_text($paidAt ?: $invoice['invoice_date']); ?></strong>
+            </div>
+          </aside>
         </section>
       </div>
 
       <footer class="receipt-footer">
         <div>
-          Generated by Command Center POS. Receipt ID <?php echo receipt_text($invoice['invoice_no']); ?>. Developed by Nicander and Benjamin.
+          Generated by <?php echo receipt_text($company['company']); ?>. Receipt ID <?php echo receipt_text($invoice['invoice_no']); ?>.
         </div>
-        <div class="signature">Authorized Signature</div>
       </footer>
     </section>
   </main>

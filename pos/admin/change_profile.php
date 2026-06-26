@@ -214,52 +214,29 @@ require_once('partials/_head.php');
         'command_center_image' => '',
       ];
       $commandCenterImage = $companyInfo['command_center_image'] ?? '';
-      $adminInitials = 'AD';
-      $adminNameParts = preg_split('/\s+/', trim($admin->admin_name));
-      if (!empty($adminNameParts[0])) {
-        $adminInitials = strtoupper(substr($adminNameParts[0], 0, 1));
-        if (!empty($adminNameParts[1])) {
-          $adminInitials .= strtoupper(substr($adminNameParts[1], 0, 1));
-        }
-      }
     ?>
       <main class="container-fluid admin-settings-page">
-        <section class="admin-settings-hero admin-profile-command-hero">
-          <div class="admin-profile-hero-copy">
-            <p class="admin-profile-kicker">Account Settings</p>
-            <h1 class="admin-profile-title">Profile command center</h1>
-            <p class="admin-profile-copy">Update administrator access, receipt identity, and the sidebar image from one clean workspace.</p>
-            <div class="admin-profile-hero-actions">
-              <a class="btn btn-light" href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-              <a class="btn btn-outline-light" href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </div>
-          </div>
-          <div class="admin-settings-identity admin-profile-identity-card">
-            <div class="admin-profile-avatar admin-profile-avatar-modern">
-              <img src="assets/img/theme/user-a-min.png" alt="<?php echo htmlspecialchars($admin->admin_name); ?>">
-              <span class="admin-profile-avatar-initials"><?php echo htmlspecialchars($adminInitials); ?></span>
-            </div>
-            <div class="admin-profile-identity-copy">
-              <span class="admin-profile-role-pill">Administrator</span>
-              <h2><?php echo htmlspecialchars($admin->admin_name); ?></h2>
-              <p><?php echo htmlspecialchars($admin->admin_email); ?></p>
-              <span class="admin-profile-status-pill"><span></span> Signed in</span>
-            </div>
-          </div>
-        </section>
-
         <section class="admin-settings-strip">
           <div class="admin-settings-stat">
-            <span>Company</span>
-            <strong><?php echo htmlspecialchars($companyInfo['company']); ?></strong>
+            <span class="admin-settings-stat-icon"><i class="fas fa-store"></i></span>
+            <span class="admin-settings-stat-copy">
+              <small>Company</small>
+              <strong><?php echo htmlspecialchars($companyInfo['company']); ?></strong>
+            </span>
           </div>
           <div class="admin-settings-stat">
-            <span>City</span>
-            <strong><?php echo htmlspecialchars($companyInfo['city']); ?></strong>
+            <span class="admin-settings-stat-icon admin-settings-stat-icon-city"><i class="fas fa-map-marker-alt"></i></span>
+            <span class="admin-settings-stat-copy">
+              <small>City</small>
+              <strong><?php echo htmlspecialchars($companyInfo['city']); ?></strong>
+            </span>
           </div>
           <div class="admin-settings-stat">
-            <span>Phone</span>
-            <strong><?php echo htmlspecialchars($companyInfo['phone']); ?></strong>
+            <span class="admin-settings-stat-icon admin-settings-stat-icon-phone"><i class="fas fa-phone"></i></span>
+            <span class="admin-settings-stat-copy">
+              <small>Phone</small>
+              <strong><?php echo htmlspecialchars($companyInfo['phone']); ?></strong>
+            </span>
           </div>
         </section>
 
@@ -298,7 +275,7 @@ require_once('partials/_head.php');
                   <h3>Sidebar Image</h3>
                 </div>
               </div>
-              <div class="admin-command-preview">
+              <div class="admin-command-preview" id="command-center-preview">
                 <?php if (!empty($commandCenterImage)) { ?>
                   <img src="<?php echo htmlspecialchars($commandCenterImage); ?>" alt="Command center image">
                 <?php } else { ?>
@@ -416,6 +393,42 @@ require_once('partials/_head.php');
 
   <?php
   require_once('partials/_scripts.php');
+  ?>
+  <script>
+    (function() {
+      var imageInput = document.getElementById('command-center-image');
+      var preview = document.getElementById('command-center-preview');
+      var activePreviewUrl = null;
+
+      if (!imageInput || !preview) {
+        return;
+      }
+
+      imageInput.addEventListener('change', function() {
+        var file = imageInput.files && imageInput.files[0];
+
+        if (activePreviewUrl) {
+          URL.revokeObjectURL(activePreviewUrl);
+          activePreviewUrl = null;
+        }
+
+        if (!file) {
+          preview.classList.remove('is-previewing');
+          return;
+        }
+
+        if (!file.type || file.type.indexOf('image/') !== 0) {
+          preview.classList.remove('is-previewing');
+          return;
+        }
+
+        activePreviewUrl = URL.createObjectURL(file);
+        preview.innerHTML = '<img src="' + activePreviewUrl + '" alt="Selected command center image preview"><span class="admin-command-preview-badge">Preview</span>';
+        preview.classList.add('is-previewing');
+      });
+    })();
+  </script>
+  <?php
   require_once('partials/_footer.php');
   ?>
 </body>

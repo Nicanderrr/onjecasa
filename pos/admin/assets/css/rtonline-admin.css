@@ -21,11 +21,16 @@ body {
 
 body {
   color: var(--rto-ink);
-  font-family: "Segoe UI", Inter, "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: Constantia, "Times New Roman", serif;
   background:
     radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 32%),
     radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 28%),
     linear-gradient(180deg, #f8fafc 0%, #eef2ff 46%, #f8fafc 100%) !important;
+}
+
+.navbar-vertical,
+.navbar-vertical * {
+  font-family: "Segoe UI", Inter, "Open Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 body.bg-dark {
@@ -1206,7 +1211,10 @@ body.pos-auth-body .footer {
 }
 
 .admin-settings-stat {
+  display: flex;
   min-width: 0;
+  gap: 0.85rem;
+  align-items: center;
   padding: 1rem 1.1rem;
   border: 1px solid rgba(226, 232, 240, 0.92);
   border-radius: 1.15rem;
@@ -1214,7 +1222,38 @@ body.pos-auth-body .footer {
   box-shadow: 0 22px 44px -36px rgba(15, 23, 42, 0.38);
 }
 
-.admin-settings-stat span {
+.admin-settings-stat-icon {
+  display: grid !important;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 0.95rem;
+  box-shadow: 0 14px 28px -24px rgba(37, 99, 235, 0.72);
+}
+
+.admin-settings-stat-icon-city {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.admin-settings-stat-icon-phone {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.admin-settings-stat-copy {
+  display: block;
+  min-width: 0;
+}
+
+.admin-settings-stat small {
   display: block;
   color: #94a3b8;
   font-size: 0.68rem;
@@ -1566,6 +1605,7 @@ body.pos-auth-body .footer {
 }
 
 .admin-command-preview {
+  position: relative;
   display: flex;
   width: 5.75rem;
   height: 5.75rem;
@@ -1580,6 +1620,24 @@ body.pos-auth-body .footer {
   border-radius: 1.35rem;
   background: #fff;
   box-shadow: 0 20px 40px -30px rgba(15, 23, 42, 0.55);
+}
+
+.admin-command-preview.is-previewing {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12), 0 18px 34px -28px rgba(37, 99, 235, 0.75);
+}
+
+.admin-command-preview-badge {
+  position: absolute;
+  right: 0.35rem;
+  bottom: 0.35rem;
+  padding: 0.2rem 0.38rem;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .admin-command-preview img {
@@ -2881,7 +2939,7 @@ body:not(.pos-auth-body) .admin-footer .container-fluid {
 
 body:not(.pos-auth-body) .admin-settings-page {
   max-width: 1280px;
-  padding: 1.5rem 1.5rem 6rem;
+  padding: 1rem 1.5rem 6rem;
 }
 
 body:not(.pos-auth-body) .admin-settings-hero {
@@ -2940,6 +2998,48 @@ body:not(.pos-auth-body) .admin-command-preview {
   border-color: var(--hmd-border);
   border-radius: 8px;
   box-shadow: var(--hmd-shadow-sm);
+}
+
+body:not(.pos-auth-body) .main-content,
+body:not(.pos-auth-body) .navbar-top.admin-navbar,
+body:not(.pos-auth-body) .modal,
+body:not(.pos-auth-body) .dropdown-menu {
+  font-family: Constantia, "Times New Roman", serif;
+}
+
+body:not(.pos-auth-body) .main-content p,
+body:not(.pos-auth-body) .main-content span,
+body:not(.pos-auth-body) .main-content small,
+body:not(.pos-auth-body) .main-content label,
+body:not(.pos-auth-body) .main-content td,
+body:not(.pos-auth-body) .main-content th,
+body:not(.pos-auth-body) .main-content input,
+body:not(.pos-auth-body) .main-content select,
+body:not(.pos-auth-body) .main-content textarea,
+body:not(.pos-auth-body) .navbar-top.admin-navbar,
+body:not(.pos-auth-body) .modal,
+body:not(.pos-auth-body) .dropdown-menu {
+  font-weight: 400;
+}
+
+body:not(.pos-auth-body) .main-content h1,
+body:not(.pos-auth-body) .main-content h2,
+body:not(.pos-auth-body) .main-content h3,
+body:not(.pos-auth-body) .main-content h4,
+body:not(.pos-auth-body) .main-content h5,
+body:not(.pos-auth-body) .main-content h6,
+body:not(.pos-auth-body) .main-content strong,
+body:not(.pos-auth-body) .main-content .btn,
+body:not(.pos-auth-body) .navbar-top.admin-navbar .admin-navbar-heading,
+body:not(.pos-auth-body) .modal-title {
+  font-weight: 600 !important;
+}
+
+body:not(.pos-auth-body) .main-content .admin-form-kicker,
+body:not(.pos-auth-body) .main-content .admin-profile-kicker,
+body:not(.pos-auth-body) .main-content .product-eyebrow,
+body:not(.pos-auth-body) .main-content .admin-settings-stat small {
+  font-weight: 500 !important;
 }
 
 body:not(.pos-auth-body) .product-page-header {
