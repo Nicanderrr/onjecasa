@@ -17,20 +17,36 @@
 @endphp
 
 <div class="entity-page">
-  <section class="entity-hero entity-hero-slim">
-    <div class="entity-stats">
-      <div class="entity-stat">
-        <span>Total Employees</span>
-        <strong>{{ $rows->count() }}</strong>
-      </div>
-      <div class="entity-stat">
-        <span>Unique Numbers</span>
-        <strong>{{ $uniqueNumbers }}</strong>
-      </div>
-      <div class="entity-stat">
-        <span>Email Records</span>
-        <strong>{{ $emailCount }}</strong>
-      </div>
+  <section class="row g-2 dashboard-metrics entity-metrics" aria-label="Employee metrics">
+    <div class="col-12 col-md-4">
+      <article class="metric-card metric-primary">
+        <div class="metric-top">
+          <span class="metric-label">Total Employees</span>
+          <span class="metric-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
+        </div>
+        <div class="metric-value">{{ $rows->count() }}</div>
+        <div class="metric-meta"><span class="text-primary">Workforce</span><span>staff records</span></div>
+      </article>
+    </div>
+    <div class="col-12 col-md-4">
+      <article class="metric-card metric-success">
+        <div class="metric-top">
+          <span class="metric-label">Unique Numbers</span>
+          <span class="metric-icon"><i class="bi bi-telephone" aria-hidden="true"></i></span>
+        </div>
+        <div class="metric-value">{{ $uniqueNumbers }}</div>
+        <div class="metric-meta"><span class="text-success">Contact</span><span>phone numbers</span></div>
+      </article>
+    </div>
+    <div class="col-12 col-md-4">
+      <article class="metric-card metric-warning">
+        <div class="metric-top">
+          <span class="metric-label">Email Records</span>
+          <span class="metric-icon"><i class="bi bi-envelope-check" aria-hidden="true"></i></span>
+        </div>
+        <div class="metric-value">{{ $emailCount }}</div>
+        <div class="metric-meta"><span class="text-warning">Reachable</span><span>email addresses</span></div>
+      </article>
     </div>
   </section>
 

@@ -618,6 +618,32 @@ html[data-theme="dark"] .profile-button .avatar-sm {
   font-size: 0.76rem;
 }
 
+.entity-metrics .metric-card {
+  width: 100%;
+  min-height: 112px;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+}
+
+.entity-metrics .metric-icon {
+  width: 34px;
+  height: 34px;
+}
+
+.entity-metrics .metric-label {
+  font-size: 0.66rem;
+}
+
+.entity-metrics .metric-value {
+  margin-top: 0.5rem;
+  font-size: 1.35rem;
+}
+
+.entity-metrics .metric-meta {
+  margin-top: 0.45rem;
+  font-size: 0.7rem;
+}
+
 .recent-orders-panel .table {
   font-size: 0.82rem;
 }
@@ -812,6 +838,190 @@ html[data-theme="dark"] .profile-button .avatar-sm {
   background: #e7f6f3;
   color: #0f766e;
 }
+
+.stock-pill.out {
+  background: #ffecec;
+  color: #b42318;
+}
+
+.products-toolbar {
+  padding: 1rem 1.15rem;
+}
+
+.products-table-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.products-table-heading > div {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.products-table-heading strong {
+  color: var(--admin-text);
+  font-size: 0.88rem;
+}
+
+.products-table-heading span {
+  color: var(--admin-muted);
+  font-size: 0.72rem;
+}
+
+.products-table-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 9px;
+  background: #eaf2ff;
+  color: var(--admin-primary);
+}
+
+.entity-filter-wrap {
+  position: relative;
+  width: min(100%, 320px);
+}
+
+.entity-filter-wrap > i {
+  position: absolute;
+  top: 50%;
+  left: 0.8rem;
+  z-index: 1;
+  color: var(--admin-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.entity-filter-wrap .entity-filter {
+  width: 100%;
+  min-width: 0;
+  padding-left: 2.25rem;
+}
+
+.products-table .product-cell {
+  min-width: 290px;
+  box-shadow: inset 3px 0 transparent;
+  transition: box-shadow 0.16s ease;
+}
+
+.products-table tbody tr:hover .product-cell {
+  box-shadow: inset 3px 0 var(--admin-primary);
+}
+
+.product-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.product-thumb-wrap {
+  display: grid;
+  flex: 0 0 auto;
+  padding: 3px;
+  place-items: center;
+  border: 1px solid var(--admin-border);
+  border-radius: 13px;
+  background: var(--admin-surface);
+}
+
+.product-thumb-wrap .thumb-preview {
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 9px;
+  box-shadow: none;
+}
+
+.product-copy {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.product-copy strong {
+  color: var(--admin-text);
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.product-copy span {
+  max-width: 310px;
+  overflow: hidden;
+  color: var(--admin-muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-code {
+  display: inline-flex;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 7px;
+  background: var(--admin-surface-soft);
+  color: var(--admin-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.product-stock {
+  display: grid;
+  justify-items: start;
+  gap: 0.3rem;
+}
+
+.product-stock .stock-pill {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.68rem;
+}
+
+.product-stock small {
+  padding-left: 0.15rem;
+  color: var(--admin-muted);
+  font-size: 0.68rem;
+}
+
+.stock-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.product-price {
+  color: var(--admin-text);
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.product-date {
+  color: var(--admin-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.product-actions {
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+}
+
+.product-actions .btn {
+  display: inline-grid;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border-radius: 9px;
+}
+
 
 .compact-form {
   display: grid;

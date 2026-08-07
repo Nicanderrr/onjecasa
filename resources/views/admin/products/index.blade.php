@@ -14,97 +14,134 @@
 @php
   $lowStock = $products->filter(fn ($prod) => (int) ($prod->stock ?? 0) <= 10)->count();
   $inventoryValue = $products->sum(fn ($prod) => (float) ($prod->price ?? 0) * (int) ($prod->stock ?? 0));
-  $featured = $products->first();
 @endphp
 
 <div class="entity-page">
-  <section class="entity-hero entity-hero-slim">
-    <div class="entity-stats">
-      <div class="entity-stat">
-        <span>Total Products</span>
-        <strong>{{ $products->count() }}</strong>
-      </div>
-      <div class="entity-stat">
-        <span>Low Stock</span>
-        <strong>{{ $lowStock }}</strong>
-      </div>
-      <div class="entity-stat">
-        <span>Inventory Value</span>
-        <strong>{{ number_format($inventoryValue, 2) }}</strong>
-      </div>
+  <section class="row g-2 dashboard-metrics entity-metrics" aria-label="Product metrics">
+    <div class="col-12 col-md-4">
+      <article class="metric-card metric-primary">
+        <div class="metric-top">
+          <span class="metric-label">Total Products</span>
+          <span class="metric-icon"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
+        </div>
+        <div class="metric-value">{{ $products->count() }}</div>
+        <div class="metric-meta"><span class="text-primary">Catalog</span><span>items listed</span></div>
+      </article>
+    </div>
+    <div class="col-12 col-md-4">
+      <article class="metric-card metric-danger">
+        <div class="metric-top">
+          <span class="metric-label">Low Stock</span>
+          <span class="metric-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+        </div>
+        <div class="metric-value">{{ $lowStock }}</div>
+        <div class="metric-meta"><span class="text-danger">Attention</span><span>10 units or fewer</span></div>
+      </article>
+    </div>
+    <div class="col-12 col-md-4">
+      <article class="metric-card metric-success">
+        <div class="metric-top">
+          <span class="metric-label">Inventory Value</span>
+          <span class="metric-icon"><i class="bi bi-cash-stack" aria-hidden="true"></i></span>
+        </div>
+        <div class="metric-value">{{ number_format($inventoryValue, 2) }}</div>
+        <div class="metric-meta"><span class="text-success">Stock</span><span>estimated value</span></div>
+      </article>
     </div>
   </section>
 
   <div class="card shadow entity-card">
-    <div class="card-header border-0 entity-toolbar">
-      <div class="entity-chip">
-        <i class="fas fa-box-open"></i>
-        {{ $featured ? $featured->name : 'No products yet' }}
+    <div class="card-header border-0 entity-toolbar products-toolbar">
+      <div class="products-table-heading">
+        <span class="products-table-icon"><i class="bi bi-boxes"></i></span>
+        <div>
+          <strong>Product inventory</strong>
+          <span>{{ $products->count() }} {{ \Illuminate\Support\Str::plural('item', $products->count()) }} in the catalog</span>
+        </div>
       </div>
-      <input
-        type="search"
-        class="form-control form-control-sm entity-filter"
-        placeholder="Filter products"
-        aria-label="Filter products"
-        data-table-filter="#products-table"
-      >
+      <div class="entity-filter-wrap">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input
+          type="search"
+          class="form-control form-control-sm entity-filter"
+          placeholder="Search products or SKU"
+          aria-label="Filter products"
+          data-table-filter="#products-table"
+        >
+      </div>
     </div>
 
     <div class="table-responsive">
-      <table class="table align-items-center table-flush" id="products-table">
+      <table class="table align-items-center table-flush products-table" id="products-table">
         <thead class="thead-light">
           <tr>
-            <th>Image</th>
+            <th>Product</th>
+            <th>SKU</th>
             <th>Stock</th>
-            <th>Name</th>
-            <th>Price</th>
+            <th>Unit Price</th>
+            <th>Updated</th>
             <th class="text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
           @forelse($products as $prod)
+            @php
+              $stock = (int) ($prod->stock ?? 0);
+              $stockState = $stock === 0 ? 'out' : ($stock <= 10 ? 'low' : 'ok');
+              $stockLabel = $stock === 0 ? 'Out of stock' : ($stock <= 10 ? 'Low stock' : 'In stock');
+            @endphp
             <tr data-filter-row>
-              <td>
-                @if($prod->image)
-                  <img class="thumb-preview" src="{{ asset('assets/admin/img/products/'.$prod->image) }}" alt="{{ $prod->name }}">
-                @else
-                  <img class="thumb-preview" src="{{ asset('assets/admin/img/products/place.png') }}" alt="{{ $prod->name }}">
-                @endif
+              <td class="product-cell">
+                <div class="product-identity">
+                  <div class="product-thumb-wrap">
+                    @if($prod->image)
+                      <img class="thumb-preview" src="{{ asset('assets/admin/img/products/'.$prod->image) }}" alt="{{ $prod->name }}">
+                    @else
+                      <img class="thumb-preview" src="{{ asset('assets/admin/img/products/place.png') }}" alt="{{ $prod->name }}">
+                    @endif
+                  </div>
+                  <div class="product-copy">
+                    <strong>{{ $prod->name }}</strong>
+                    <span>{{ \Illuminate\Support\Str::limit($prod->description ?: 'No description added', 58) }}</span>
+                  </div>
+                </div>
               </td>
+              <td><span class="product-code">{{ $prod->code }}</span></td>
               <td>
-                <span class="stock-pill {{ (int) $prod->stock <= 10 ? 'low' : 'ok' }}">
-                  <i class="fas fa-cubes"></i>
-                  {{ (int) $prod->stock }} units
+                <div class="product-stock">
+                  <span class="stock-pill {{ $stockState }}"><span class="stock-dot"></span>{{ $stockLabel }}</span>
+                  <small>{{ $stock }} {{ \Illuminate\Support\Str::plural('unit', $stock) }}</small>
+                </div>
+              </td>
+              <td><span class="product-price">{{ number_format($prod->price, 2) }}</span></td>
+              <td>
+                <span class="product-date">
+                  {{ $prod->updated_at ? \Illuminate\Support\Carbon::parse($prod->updated_at)->format('d M Y') : '—' }}
                 </span>
               </td>
-              <td>
-                <div class="font-weight-bold">{{ $prod->name }}</div>
-                <div class="text-muted small">{{ $prod->code }}</div>
-              </td>
-              <td>{{ number_format($prod->price, 2) }}</td>
               <td class="text-right">
-                <div class="action-group justify-content-end">
+                <div class="action-group product-actions justify-content-end">
+                  <a href="{{ route('admin.products.edit', $prod->id) }}" class="btn btn-sm btn-outline-primary" title="Edit {{ $prod->name }}" aria-label="Edit {{ $prod->name }}">
+                    <i class="bi bi-pencil-square"></i>
+                  </a>
                   <form method="POST" action="{{ route('admin.products.destroy', $prod->id) }}">
                     @csrf
                     @method('DELETE')
-                    <button class="btn btn-sm btn-outline-danger" title="Delete product">
-                      <i class="fas fa-trash"></i>
+                    <button class="btn btn-sm btn-outline-danger" title="Delete {{ $prod->name }}" aria-label="Delete {{ $prod->name }}">
+                      <i class="bi bi-trash3"></i>
                     </button>
                   </form>
-                  <a href="{{ route('admin.products.edit', $prod->id) }}" class="btn btn-sm btn-outline-primary" title="Edit product">
-                    <i class="fas fa-edit"></i>
-                  </a>
                 </div>
               </td>
             </tr>
           @empty
             <tr data-filter-empty>
-              <td colspan="5" class="text-center py-5 text-muted">No products yet. Add the first item to start the catalog.</td>
+              <td colspan="6" class="text-center py-5 text-muted">No products yet. Add the first item to start the catalog.</td>
             </tr>
           @endforelse
           @if($products->count())
             <tr data-filter-empty style="display:none;">
-              <td colspan="5" class="text-center py-5 text-muted">No matching products found.</td>
+              <td colspan="6" class="text-center py-5 text-muted">No matching products found.</td>
             </tr>
           @endif
         </tbody>

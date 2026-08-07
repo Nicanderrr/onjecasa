@@ -16,25 +16,36 @@
 @endphp
 
 <div class="entity-page">
-  <section class="entity-hero">
-    <div class="entity-hero-copy">
-      <p class="eyebrow">Catalog overview</p>
-      <h1>Categories</h1>
-      <p>A tighter grouping screen for keeping the catalog organized.</p>
+  <section class="row g-2 dashboard-metrics entity-metrics" aria-label="Category metrics">
+    <div class="col-12 col-md-4">
+      <article class="metric-card metric-primary">
+        <div class="metric-top">
+          <span class="metric-label">Total Categories</span>
+          <span class="metric-icon"><i class="bi bi-collection" aria-hidden="true"></i></span>
+        </div>
+        <div class="metric-value">{{ $rows->count() }}</div>
+        <div class="metric-meta"><span class="text-primary">Catalog</span><span>groups available</span></div>
+      </article>
     </div>
-    <div class="entity-stats">
-      <div class="entity-stat">
-        <span>Total Categories</span>
-        <strong>{{ $rows->count() }}</strong>
-      </div>
-      <div class="entity-stat">
-        <span>Latest Code</span>
-        <strong>{{ $featured->code ?? '—' }}</strong>
-      </div>
-      <div class="entity-stat">
-        <span>Latest Name</span>
-        <strong>{{ $featured->name ?? '—' }}</strong>
-      </div>
+    <div class="col-12 col-md-4">
+      <article class="metric-card metric-success">
+        <div class="metric-top">
+          <span class="metric-label">Latest Code</span>
+          <span class="metric-icon"><i class="bi bi-upc-scan" aria-hidden="true"></i></span>
+        </div>
+        <div class="metric-value">{{ $featured->code ?? '—' }}</div>
+        <div class="metric-meta"><span class="text-success">Newest</span><span>category code</span></div>
+      </article>
+    </div>
+    <div class="col-12 col-md-4">
+      <article class="metric-card metric-warning">
+        <div class="metric-top">
+          <span class="metric-label">Latest Name</span>
+          <span class="metric-icon"><i class="bi bi-tag" aria-hidden="true"></i></span>
+        </div>
+        <div class="metric-value">{{ $featured->name ?? '—' }}</div>
+        <div class="metric-meta"><span class="text-warning">Recent</span><span>category added</span></div>
+      </article>
     </div>
   </section>
 
