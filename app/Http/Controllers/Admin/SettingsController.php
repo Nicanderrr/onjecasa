@@ -8,24 +8,23 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class SettingsController extends Controller
 {
     public function index(): View
     {
-        $heroImage = DB::table('pos_settings')->where('key', 'admin_hero_image')->value('value');
-        $heroOverlay = DB::table('pos_settings')->where('key', 'admin_hero_overlay')->value('value');
-        $heroOverlay = is_numeric($heroOverlay) ? (int) $heroOverlay : 72;
-        $darkMode = DB::table('pos_settings')->where('key', 'admin_dark_mode')->value('value');
-        $darkMode = (string) $darkMode === '1';
-        $themePreset = DB::table('pos_settings')->where('key', 'theme_preset')->value('value') ?: 'emerald';
-        $fontFamily = DB::table('pos_settings')->where('key', 'font_family')->value('value') ?: 'open_sans';
-        $fontSize = DB::table('pos_settings')->where('key', 'font_size')->value('value') ?: '15';
-        $sidebarColor = DB::table('pos_settings')->where('key', 'sidebar_color')->value('value') ?: 'default';
-        $systemName = DB::table('pos_settings')->where('key', 'system_name')->value('value') ?: 'POS';
-        $sidebarLogo = DB::table('pos_settings')->where('key', 'sidebar_logo')->value('value');
-        return view('admin.settings.index', compact('heroImage', 'heroOverlay', 'darkMode', 'themePreset', 'fontFamily', 'fontSize', 'sidebarColor', 'systemName', 'sidebarLogo'));
+        $loginImage = $this->settingValue('admin_login_image');
+        $loginOverlay = $this->intSetting('admin_login_overlay', 72);
+        $loginOverlayColor = $this->settingValue('admin_login_overlay_color') ?: 'red';
+        $pinImage = $this->settingValue('admin_pin_image');
+        $pinOverlay = $this->intSetting('admin_pin_overlay', 72);
+        $pinOverlayColor = $this->settingValue('admin_pin_overlay_color') ?: 'green';
+        $darkMode = $this->settingValue('admin_dark_mode') === '1';
+        $systemName = $this->settingValue('system_name') ?: 'POS';
+        $sidebarLogo = $this->settingValue('sidebar_logo');
+        return view('admin.settings.index', compact('loginImage', 'loginOverlay', 'loginOverlayColor', 'pinImage', 'pinOverlay', 'pinOverlayColor', 'darkMode', 'systemName', 'sidebarLogo'));
     }
 
     public function update(Request $request): RedirectResponse
@@ -35,13 +34,13 @@ class SettingsController extends Controller
             'email' => ['required', 'email', 'max:255'],
             'password' => ['nullable', 'string', 'min:6'],
             'pincode' => ['nullable', 'string', 'min:4', 'max:10'],
-            'hero_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-            'hero_overlay' => ['nullable', 'integer', 'min:40', 'max:85'],
+            'login_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'login_overlay' => ['nullable', 'integer', 'min:40', 'max:85'],
+            'login_overlay_color' => ['nullable', 'in:red,blue,green,amber,slate,purple'],
+            'pin_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'pin_overlay' => ['nullable', 'integer', 'min:40', 'max:85'],
+            'pin_overlay_color' => ['nullable', 'in:red,blue,green,amber,slate,purple'],
             'dark_mode' => ['nullable', 'in:0,1'],
-            'theme_preset' => ['nullable', 'in:emerald,amber,rose,ocean,slate'],
-            'font_family' => ['nullable', 'in:open_sans,poppins,source_sans,nunito,system'],
-            'font_size' => ['nullable', 'integer', 'min:13', 'max:19'],
-            'sidebar_color' => ['nullable', 'in:default,midnight,forest,wine,indigo'],
             'system_name' => ['nullable', 'string', 'max:30'],
             'sidebar_logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:2048'],
         ]);
@@ -57,19 +56,19 @@ class SettingsController extends Controller
         }
         $user->save();
 
-        if ($request->hasFile('hero_image')) {
-            $oldImage = DB::table('pos_settings')->where('key', 'admin_hero_image')->value('value');
+        if ($request->hasFile('login_image')) {
+            $oldImage = $this->settingValue('admin_login_image');
             $dir = public_path('assets/admin/img/settings');
             if (!is_dir($dir)) {
                 mkdir($dir, 0777, true);
             }
 
-            $file = $request->file('hero_image');
-            $fileName = 'hero-' . now()->format('YmdHis') . '-' . random_int(100, 999) . '.' . $file->getClientOriginalExtension();
+            $file = $request->file('login_image');
+            $fileName = 'login-' . now()->format('YmdHis') . '-' . random_int(100, 999) . '.' . $file->getClientOriginalExtension();
             $file->move($dir, $fileName);
 
             DB::table('pos_settings')->updateOrInsert(
-                ['key' => 'admin_hero_image'],
+                ['key' => 'admin_login_image'],
                 ['value' => $fileName, 'updated_at' => now(), 'created_at' => now()]
             );
 
@@ -82,9 +81,58 @@ class SettingsController extends Controller
         }
 
         DB::table('pos_settings')->updateOrInsert(
-            ['key' => 'admin_hero_overlay'],
+            ['key' => 'admin_login_overlay'],
             [
-                'value' => (string) ((int) ($data['hero_overlay'] ?? 72)),
+                'value' => (string) ((int) ($data['login_overlay'] ?? 72)),
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
+        DB::table('pos_settings')->updateOrInsert(
+            ['key' => 'admin_login_overlay_color'],
+            [
+                'value' => (string) ($data['login_overlay_color'] ?? 'red'),
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
+
+        if ($request->hasFile('pin_image')) {
+            $oldImage = $this->settingValue('admin_pin_image');
+            $dir = public_path('assets/admin/img/settings');
+            if (!is_dir($dir)) {
+                mkdir($dir, 0777, true);
+            }
+
+            $file = $request->file('pin_image');
+            $fileName = 'pin-' . now()->format('YmdHis') . '-' . random_int(100, 999) . '.' . $file->getClientOriginalExtension();
+            $file->move($dir, $fileName);
+
+            DB::table('pos_settings')->updateOrInsert(
+                ['key' => 'admin_pin_image'],
+                ['value' => $fileName, 'updated_at' => now(), 'created_at' => now()]
+            );
+
+            if (!empty($oldImage)) {
+                $oldPath = $dir . DIRECTORY_SEPARATOR . $oldImage;
+                if (is_file($oldPath)) {
+                    @unlink($oldPath);
+                }
+            }
+        }
+
+        DB::table('pos_settings')->updateOrInsert(
+            ['key' => 'admin_pin_overlay'],
+            [
+                'value' => (string) ((int) ($data['pin_overlay'] ?? 72)),
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
+        DB::table('pos_settings')->updateOrInsert(
+            ['key' => 'admin_pin_overlay_color'],
+            [
+                'value' => (string) ($data['pin_overlay_color'] ?? 'green'),
                 'updated_at' => now(),
                 'created_at' => now(),
             ]
@@ -98,10 +146,6 @@ class SettingsController extends Controller
                 'created_at' => now(),
             ]
         );
-        DB::table('pos_settings')->updateOrInsert(['key' => 'theme_preset'], ['value' => (string)($data['theme_preset'] ?? 'emerald'), 'updated_at' => now(), 'created_at' => now()]);
-        DB::table('pos_settings')->updateOrInsert(['key' => 'font_family'], ['value' => (string)($data['font_family'] ?? 'open_sans'), 'updated_at' => now(), 'created_at' => now()]);
-        DB::table('pos_settings')->updateOrInsert(['key' => 'font_size'], ['value' => (string)((int)($data['font_size'] ?? 15)), 'updated_at' => now(), 'created_at' => now()]);
-        DB::table('pos_settings')->updateOrInsert(['key' => 'sidebar_color'], ['value' => (string)($data['sidebar_color'] ?? 'default'), 'updated_at' => now(), 'created_at' => now()]);
         DB::table('pos_settings')->updateOrInsert(['key' => 'system_name'], ['value' => (string)($data['system_name'] ?? 'POS'), 'updated_at' => now(), 'created_at' => now()]);
 
         if ($request->hasFile('sidebar_logo')) {
@@ -135,13 +179,13 @@ class SettingsController extends Controller
                     'pincode_changed' => !empty($data['pincode']),
                 ],
                 'appearance' => [
-                    'hero_image_changed' => $request->hasFile('hero_image'),
-                    'hero_overlay' => (int) ($data['hero_overlay'] ?? 72),
+                    'login_image_changed' => $request->hasFile('login_image'),
+                    'login_overlay' => (int) ($data['login_overlay'] ?? 72),
+                    'login_overlay_color' => $data['login_overlay_color'] ?? 'red',
+                    'pin_image_changed' => $request->hasFile('pin_image'),
+                    'pin_overlay' => (int) ($data['pin_overlay'] ?? 72),
+                    'pin_overlay_color' => $data['pin_overlay_color'] ?? 'green',
                     'dark_mode' => $request->boolean('dark_mode'),
-                    'theme_preset' => $data['theme_preset'] ?? 'emerald',
-                    'font_family' => $data['font_family'] ?? 'open_sans',
-                    'font_size' => (int) ($data['font_size'] ?? 15),
-                    'sidebar_color' => $data['sidebar_color'] ?? 'default',
                     'system_name' => $data['system_name'] ?? 'POS',
                     'sidebar_logo_changed' => $request->hasFile('sidebar_logo'),
                 ],
@@ -149,5 +193,23 @@ class SettingsController extends Controller
         ]);
 
         return redirect()->route('admin.settings.index')->with('success', 'Settings updated');
+    }
+
+    private function settingValue(string $key): ?string
+    {
+        if (!Schema::hasTable('pos_settings')) {
+            return null;
+        }
+
+        $value = DB::table('pos_settings')->where('key', $key)->value('value');
+
+        return $value !== null ? (string) $value : null;
+    }
+
+    private function intSetting(string $key, int $default): int
+    {
+        $value = $this->settingValue($key);
+
+        return is_numeric($value) ? (int) $value : $default;
     }
 }

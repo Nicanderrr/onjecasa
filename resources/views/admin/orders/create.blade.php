@@ -83,6 +83,7 @@
   const grandTotalInput = document.getElementById('grand_total');
   const subtotalText = document.getElementById('subtotal_text');
   const totalText = document.getElementById('total_text');
+  let receiptWindow = null;
   let rowIndex = 1;
 
   function recalcRow(row) {
@@ -130,18 +131,67 @@
   bindRow(tbody.querySelector('tr'));
 
   orderForm.addEventListener('submit', function (e) {
-    if (paymentMethod.value !== 'Mobile Money') return;
+    if (paymentMethod.value !== 'Mobile Money') {
+      orderForm.target = '_self';
+      return;
+    }
     e.preventDefault();
     const amount = Math.round(Number(grandTotalInput.value || 0) * 100);
-    if (!amount || amount < 100) { alert('Please add at least one valid order item.'); return; }
-    if (!paystackPublicKey) { alert('Paystack public key is not configured.'); return; }
+    if (!amount || amount < 100) { orderForm.target = '_self'; alert('Please add at least one valid order item.'); return; }
+    if (!paystackPublicKey) { orderForm.target = '_self'; alert('Paystack public key is not configured.'); return; }
+
+    receiptWindow = window.open('', 'newposReceiptWindow');
+    if (!receiptWindow) {
+      orderForm.target = '_self';
+      alert('Allow popups so the receipt can open after payment.');
+      return;
+    }
+
+    receiptWindow.document.write(`<!doctype html>
+      <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <title>Preparing receipt...</title>
+          <style>
+            body {
+              margin: 0;
+              min-height: 100vh;
+              display: grid;
+              place-items: center;
+              font-family: "Segoe UI", Arial, sans-serif;
+              background: #eef3ef;
+              color: #14532d;
+            }
+            .box {
+              padding: 18px 22px;
+              border-radius: 14px;
+              background: #fff;
+              border: 1px solid #d8e4db;
+              box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+              font-weight: 700;
+            }
+          </style>
+        </head>
+        <body><div class="box">Preparing receipt...</div></body>
+      </html>`);
+    receiptWindow.document.close();
+    orderForm.target = 'newposReceiptWindow';
 
     const handler = PaystackPop.setup({
       key: paystackPublicKey,
       email: @json(auth()->user()->email ?? 'admin@example.com'),
       amount, currency: 'GHS',
-      callback: function(response) { paystackRefInput.value = response.reference; orderForm.submit(); },
-      onClose: function() { alert('Payment window closed.'); }
+      callback: function(response) {
+        paystackRefInput.value = response.reference;
+        orderForm.submit();
+      },
+      onClose: function() {
+        if (receiptWindow && !receiptWindow.closed) {
+          receiptWindow.close();
+        }
+        orderForm.target = '_self';
+        alert('Payment window closed.');
+      }
     });
     handler.openIframe();
   });

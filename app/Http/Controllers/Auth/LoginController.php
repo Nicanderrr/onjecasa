@@ -8,14 +8,21 @@ use App\Support\AuditTrail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function show(): RedirectResponse
+    public function show(): View
     {
-        return redirect('/pos/admin/index.php');
+        return view('auth.login', [
+            'splashImage' => $this->authSplashImage('admin_login_image'),
+            'overlayStyle' => $this->overlayStyle('admin_login_overlay', 'admin_login_overlay_color', '185,28,28'),
+            'brandLogo' => $this->settingAsset('sidebar_logo', 'logo.png'),
+            'favicon' => $this->settingAsset('sidebar_logo', 'logo.png'),
+        ]);
     }
 
     public function login(Request $request): RedirectResponse
@@ -61,6 +68,10 @@ class LoginController extends Controller
 
         return view('auth.admin-pincode', [
             'adminName' => $request->session()->get('pending_admin_user_name', 'Admin'),
+            'splashImage' => $this->authSplashImage('admin_pin_image', 'assets/adminhmd/images/png/dasher-ai.png'),
+            'overlayStyle' => $this->overlayStyle('admin_pin_overlay', 'admin_pin_overlay_color', '16,185,129'),
+            'brandLogo' => $this->settingAsset('sidebar_logo', 'logo.png'),
+            'favicon' => $this->settingAsset('sidebar_logo', 'logo.png'),
         ]);
     }
 
@@ -106,5 +117,58 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    private function authSplashImage(string $key, string $fallback = 'assets/adminhmd/images/png/dasher-ui-bootstrap-5.jpg'): string
+    {
+        if (!Schema::hasTable('pos_settings')) {
+            return asset($fallback);
+        }
+
+        $image = DB::table('pos_settings')->where('key', $key)->value('value');
+        if (!empty($image)) {
+            return asset('assets/admin/img/settings/' . $image);
+        }
+
+        return asset($fallback);
+    }
+
+    private function settingAsset(string $key, string $fallback): string
+    {
+        if (!Schema::hasTable('pos_settings')) {
+            return asset($fallback);
+        }
+
+        $value = DB::table('pos_settings')->where('key', $key)->value('value');
+
+        return !empty($value)
+            ? asset('assets/admin/img/settings/' . $value)
+            : asset($fallback);
+    }
+
+    private function overlayStyle(string $strengthKey, string $colorKey, string $fallbackRgb): string
+    {
+        if (!Schema::hasTable('pos_settings')) {
+            $strength = 72;
+            $rgb = $fallbackRgb;
+        } else {
+            $strengthValue = DB::table('pos_settings')->where('key', $strengthKey)->value('value');
+            $colorValue = DB::table('pos_settings')->where('key', $colorKey)->value('value');
+
+            $strength = is_numeric($strengthValue) ? (int) $strengthValue : 72;
+            $rgb = match ((string) $colorValue) {
+                'red' => '185,28,28',
+                'blue' => '37,99,235',
+                'green' => '16,185,129',
+                'amber' => '217,119,6',
+                'slate' => '51,65,85',
+                'purple' => '124,58,237',
+                default => $fallbackRgb,
+            };
+        }
+
+        $alpha = max(0.4, min(0.85, $strength / 100));
+
+        return "background: linear-gradient(160deg, rgba({$rgb}, {$alpha}), rgba(2, 6, 23, 0.55));";
     }
 }

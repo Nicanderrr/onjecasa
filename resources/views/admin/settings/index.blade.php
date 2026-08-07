@@ -1,132 +1,253 @@
 @extends('layouts.admin')
+
+@section('title', 'Settings - NewPOS')
+@section('page-icon', 'bi bi-sliders')
+@section('page-eyebrow', 'Workspace')
+@section('page-title', 'Settings')
+@section('page-description', 'Tune security, branding, and visual presets from one control center.')
+@section('page-actions')
+  <button type="submit" form="settings-form" class="btn btn-primary btn-sm">
+    <i class="bi bi-check2-circle"></i> Save Changes
+  </button>
+@endsection
+
 @section('content')
-<div class="card shadow">
-  <div class="card-header border-0"><h3>Settings</h3></div>
-  <div class="card-body">
-    <form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data">
-      @csrf
-      @method('PUT')
-      <div class="form-row">
-        <div class="col-md-6">
-          <label>Name</label>
-          <input name="name" value="{{ auth()->user()->name }}" class="form-control" required>
+@php
+  $loginPreview = !empty($loginImage)
+    ? asset('assets/admin/img/settings/' . $loginImage)
+    : asset('assets/adminhmd/images/png/dasher-ui-bootstrap-5.jpg');
+  $pinPreview = !empty($pinImage)
+    ? asset('assets/admin/img/settings/' . $pinImage)
+    : asset('assets/adminhmd/images/png/dasher-ai.png');
+  $logoPreview = !empty($sidebarLogo)
+    ? asset('assets/admin/img/settings/' . $sidebarLogo)
+    : asset('logo.png');
+@endphp
+
+<div class="settings-page">
+  <div class="settings-grid">
+    <div class="card shadow settings-card">
+      <div class="card-header border-0">
+        <div class="settings-section-title">
+          <i class="bi bi-gear"></i>
+          Core Settings
         </div>
-        <div class="col-md-6">
-          <label>Email</label>
-          <input type="email" name="email" value="{{ auth()->user()->email }}" class="form-control" required>
-        </div>
+        <p class="settings-section-copy mb-0">Update profile access, appearance defaults, and sidebar branding from one form.</p>
       </div>
-      <hr>
-      <div class="form-row">
-        <div class="col-md-6">
-          <label>New Password</label>
-          <input type="password" name="password" class="form-control">
-        </div>
-        <div class="col-md-6">
-          <label>New Pincode</label>
-          <input type="password" name="pincode" class="form-control">
-        </div>
-      </div>
-      <hr>
-      <div class="form-row">
-        <div class="col-md-8">
-          <label>Dashboard Hero Background Image</label>
-          <input type="file" name="hero_image" class="form-control" accept=".jpg,.jpeg,.png,.webp">
-          <small class="text-muted">Recommended wide image. Max 4MB.</small>
-        </div>
-        <div class="col-md-4">
-          @if(!empty($heroImage))
-            <label>Current Hero Image</label>
-            <div><img src="{{ asset('assets/admin/img/settings/'.$heroImage) }}" style="width:100%; max-height:110px; object-fit:cover; border-radius:10px; border:1px solid #d9e8df;"></div>
-          @endif
-        </div>
-      </div>
-      <div class="form-row mt-3">
-        <div class="col-md-8">
-          <label>Hero Dark Overlay (40 - 85)</label>
-          <input type="range" min="40" max="85" value="{{ $heroOverlay ?? 72 }}" class="custom-range" id="hero_overlay_range">
-          <input type="number" min="40" max="85" name="hero_overlay" id="hero_overlay_input" value="{{ $heroOverlay ?? 72 }}" class="form-control" style="max-width:120px;">
-          <small class="text-muted">Higher value = darker overlay.</small>
-        </div>
-      </div>
-      <div class="form-row mt-3">
-        <div class="col-md-8">
-          <label>Dark Mode</label>
-          <div class="custom-control custom-switch">
-            <input type="checkbox" class="custom-control-input" id="dark_mode" name="dark_mode" value="1" {{ !empty($darkMode) ? 'checked' : '' }}>
-            <label class="custom-control-label" for="dark_mode">Enable admin dark theme</label>
+
+      <div class="card-body">
+        <form id="settings-form" method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data" class="settings-section">
+          @csrf
+          @method('PUT')
+
+          <div class="settings-group">
+            <h3>Identity & Security</h3>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Name</label>
+                <input name="name" value="{{ auth()->user()->name }}" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" value="{{ auth()->user()->email }}" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">New Password</label>
+                <input type="password" name="password" class="form-control" placeholder="Leave blank to keep the current password">
+                <div class="settings-help">Only set this if you want to change the admin login password.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">New Pincode</label>
+                <input type="password" name="pincode" class="form-control" placeholder="Leave blank to keep the current PIN">
+                <div class="settings-help">This controls the admin PIN screen after login.</div>
+              </div>
+            </div>
           </div>
-        </div>
+
+          <div class="settings-group">
+            <h3>Branding & Appearance</h3>
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label">Login Image</label>
+                <input type="file" name="login_image" class="form-control" accept=".jpg,.jpeg,.png,.webp">
+                <div class="settings-help">This image appears on the main login screen. Recommended wide image. Max 4MB.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Current Login Image</label>
+                <div class="settings-image-frame">
+                  <img src="{{ $loginPreview }}" alt="Current login image">
+                </div>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Login Image Dark Overlay (40 - 85)</label>
+                <input type="range" min="40" max="85" name="login_overlay" value="{{ $loginOverlay ?? 72 }}" class="form-range" id="login_overlay_range">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                  <input type="number" min="40" max="85" id="login_overlay_input" value="{{ $loginOverlay ?? 72 }}" class="form-control" style="max-width:120px;">
+                  <span class="settings-help mb-0">Higher values create a darker overlay.</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Login Hue Color</label>
+                <select name="login_overlay_color" id="login_overlay_color" class="form-select">
+                  <option value="red" {{ ($loginOverlayColor ?? 'red') === 'red' ? 'selected' : '' }}>Red</option>
+                  <option value="blue" {{ ($loginOverlayColor ?? 'red') === 'blue' ? 'selected' : '' }}>Blue</option>
+                  <option value="green" {{ ($loginOverlayColor ?? 'red') === 'green' ? 'selected' : '' }}>Green</option>
+                  <option value="amber" {{ ($loginOverlayColor ?? 'red') === 'amber' ? 'selected' : '' }}>Amber</option>
+                  <option value="slate" {{ ($loginOverlayColor ?? 'red') === 'slate' ? 'selected' : '' }}>Slate</option>
+                  <option value="purple" {{ ($loginOverlayColor ?? 'red') === 'purple' ? 'selected' : '' }}>Purple</option>
+                </select>
+                <div id="login_overlay_preview" class="mt-2 d-flex align-items-center gap-2 rounded-3 px-3 py-2 border" style="min-height: 44px;">
+                  <span class="rounded-circle border" style="width:14px;height:14px;background:#b91c1c;display:inline-block;"></span>
+                  <div class="small lh-sm">
+                    <div class="fw-semibold">Live preview</div>
+                    <div class="text-muted" id="login_overlay_preview_text">Red tint at 72%</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">PIN Side Image</label>
+                <input type="file" name="pin_image" class="form-control" accept=".jpg,.jpeg,.png,.webp">
+                <div class="settings-help">This image appears on the admin PIN screen. Max 4MB.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Current PIN Image</label>
+                <div class="settings-image-frame">
+                  <img src="{{ $pinPreview }}" alt="Current PIN image">
+                </div>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">PIN Side Dark Overlay (40 - 85)</label>
+                <input type="range" min="40" max="85" name="pin_overlay" value="{{ $pinOverlay ?? 72 }}" class="form-range" id="pin_overlay_range">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                  <input type="number" min="40" max="85" id="pin_overlay_input" value="{{ $pinOverlay ?? 72 }}" class="form-control" style="max-width:120px;">
+                  <span class="settings-help mb-0">Higher values create a darker PIN screen overlay.</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">PIN Hue Color</label>
+                <select name="pin_overlay_color" id="pin_overlay_color" class="form-select">
+                  <option value="red" {{ ($pinOverlayColor ?? 'green') === 'red' ? 'selected' : '' }}>Red</option>
+                  <option value="blue" {{ ($pinOverlayColor ?? 'green') === 'blue' ? 'selected' : '' }}>Blue</option>
+                  <option value="green" {{ ($pinOverlayColor ?? 'green') === 'green' ? 'selected' : '' }}>Green</option>
+                  <option value="amber" {{ ($pinOverlayColor ?? 'green') === 'amber' ? 'selected' : '' }}>Amber</option>
+                  <option value="slate" {{ ($pinOverlayColor ?? 'green') === 'slate' ? 'selected' : '' }}>Slate</option>
+                  <option value="purple" {{ ($pinOverlayColor ?? 'green') === 'purple' ? 'selected' : '' }}>Purple</option>
+                </select>
+                <div id="pin_overlay_preview" class="mt-2 d-flex align-items-center gap-2 rounded-3 px-3 py-2 border" style="min-height: 44px;">
+                  <span class="rounded-circle border" style="width:14px;height:14px;background:#10b981;display:inline-block;"></span>
+                  <div class="small lh-sm">
+                    <div class="fw-semibold">Live preview</div>
+                    <div class="text-muted" id="pin_overlay_preview_text">Green tint at 72%</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Dark Mode</label>
+                <div class="settings-toggle-row">
+                  <div class="settings-switch">
+                    <div class="form-check form-switch mb-0">
+                      <input type="checkbox" class="form-check-input" id="dark_mode" name="dark_mode" value="1" {{ !empty($darkMode) ? 'checked' : '' }}>
+                    </div>
+                    <label class="form-check-label mb-0" for="dark_mode">Enable admin dark theme</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Workspace Branding</h3>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">System Name (Sidebar Top)</label>
+                <input type="text" name="system_name" class="form-control" maxlength="30" value="{{ $systemName ?? 'POS' }}" placeholder="e.g. NewPOS">
+                <div class="settings-help">This name appears in the sidebar header and brand areas.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Sidebar Logo</label>
+                <input type="file" name="sidebar_logo" class="form-control" accept=".jpg,.jpeg,.png,.webp,.svg">
+                <div class="settings-help">Square logo works best. Max 2MB.</div>
+                <div class="mt-3 d-flex align-items-center gap-3 flex-wrap">
+                  <img src="{{ $logoPreview }}" alt="Current sidebar logo" class="settings-mini-image">
+                  <div>
+                    <div class="settings-preview-label">Current Logo</div>
+                    <div class="settings-preview-value">{{ $systemName ?? 'POS' }}</div>
+                    <p class="settings-preview-note mb-0">Used in the sidebar top branding.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
       </div>
-      <hr>
-      <div class="form-row">
-        <div class="col-md-3">
-          <label>Theme Preset</label>
-          <select name="theme_preset" class="form-control">
-            <option value="emerald" {{ ($themePreset ?? '') === 'emerald' ? 'selected' : '' }}>Emerald</option>
-            <option value="amber" {{ ($themePreset ?? '') === 'amber' ? 'selected' : '' }}>Amber</option>
-            <option value="rose" {{ ($themePreset ?? '') === 'rose' ? 'selected' : '' }}>Rose</option>
-            <option value="ocean" {{ ($themePreset ?? '') === 'ocean' ? 'selected' : '' }}>Ocean</option>
-            <option value="slate" {{ ($themePreset ?? '') === 'slate' ? 'selected' : '' }}>Slate</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label>Font Family</label>
-          <select name="font_family" class="form-control">
-            <option value="open_sans" {{ ($fontFamily ?? '') === 'open_sans' ? 'selected' : '' }}>Open Sans</option>
-            <option value="poppins" {{ ($fontFamily ?? '') === 'poppins' ? 'selected' : '' }}>Poppins</option>
-            <option value="source_sans" {{ ($fontFamily ?? '') === 'source_sans' ? 'selected' : '' }}>Source Sans</option>
-            <option value="nunito" {{ ($fontFamily ?? '') === 'nunito' ? 'selected' : '' }}>Nunito</option>
-            <option value="system" {{ ($fontFamily ?? '') === 'system' ? 'selected' : '' }}>System</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label>Base Font Size</label>
-          <input type="number" min="13" max="19" name="font_size" class="form-control" value="{{ $fontSize ?? 15 }}">
-        </div>
-        <div class="col-md-3">
-          <label>Sidebar Color</label>
-          <select name="sidebar_color" class="form-control">
-            <option value="default" {{ ($sidebarColor ?? '') === 'default' ? 'selected' : '' }}>Default</option>
-            <option value="midnight" {{ ($sidebarColor ?? '') === 'midnight' ? 'selected' : '' }}>Midnight</option>
-            <option value="forest" {{ ($sidebarColor ?? '') === 'forest' ? 'selected' : '' }}>Forest</option>
-            <option value="wine" {{ ($sidebarColor ?? '') === 'wine' ? 'selected' : '' }}>Wine</option>
-            <option value="indigo" {{ ($sidebarColor ?? '') === 'indigo' ? 'selected' : '' }}>Indigo</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row mt-3">
-        <div class="col-md-6">
-          <label>System Name (Sidebar Top)</label>
-          <input type="text" name="system_name" class="form-control" maxlength="30" value="{{ $systemName ?? 'POS' }}" placeholder="e.g. NewPOS">
-        </div>
-        <div class="col-md-6">
-          <label>Sidebar Logo</label>
-          <input type="file" name="sidebar_logo" class="form-control" accept=".jpg,.jpeg,.png,.webp,.svg">
-          <small class="text-muted">Square logo works best. Max 2MB.</small>
-          @if(!empty($sidebarLogo))
-            <div class="mt-2"><img src="{{ asset('assets/admin/img/settings/'.$sidebarLogo) }}" style="height:44px; width:44px; object-fit:cover; border-radius:8px; border:1px solid #d9e8df;"></div>
-          @endif
-        </div>
-      </div>
-      <br>
-      <button class="btn btn-success">Update Settings</button>
-    </form>
+    </div>
+
   </div>
 </div>
+
 <script>
   (function () {
-    const range = document.getElementById('hero_overlay_range');
-    const input = document.getElementById('hero_overlay_input');
-    if (!range || !input) return;
-    range.addEventListener('input', () => { input.value = range.value; });
-    input.addEventListener('input', () => {
-      let v = parseInt(input.value || '72', 10);
-      if (Number.isNaN(v)) v = 72;
-      v = Math.max(40, Math.min(85, v));
-      input.value = v;
-      range.value = v;
-    });
+    const range = document.getElementById('login_overlay_range');
+    const input = document.getElementById('login_overlay_input');
+    const pinRange = document.getElementById('pin_overlay_range');
+    const pinInput = document.getElementById('pin_overlay_input');
+    const loginColor = document.getElementById('login_overlay_color');
+    const pinColor = document.getElementById('pin_overlay_color');
+    const loginPreview = document.getElementById('login_overlay_preview');
+    const pinPreview = document.getElementById('pin_overlay_preview');
+    const loginPreviewText = document.getElementById('login_overlay_preview_text');
+    const pinPreviewText = document.getElementById('pin_overlay_preview_text');
+
+    const colorMap = {
+      red: { rgb: '185,28,28', label: 'Red' },
+      blue: { rgb: '37,99,235', label: 'Blue' },
+      green: { rgb: '16,185,129', label: 'Green' },
+      amber: { rgb: '217,119,6', label: 'Amber' },
+      slate: { rgb: '51,65,85', label: 'Slate' },
+      purple: { rgb: '124,58,237', label: 'Purple' },
+    };
+
+    const clampStrength = (value) => {
+        let v = parseInt(value || '72', 10);
+        if (Number.isNaN(v)) v = 72;
+        return Math.max(40, Math.min(85, v));
+    };
+
+    const syncPair = (rangeControl, numberControl) => {
+      if (!rangeControl || !numberControl) return;
+      rangeControl.addEventListener('input', () => {
+        numberControl.value = clampStrength(rangeControl.value);
+      });
+      numberControl.addEventListener('input', () => {
+        rangeControl.value = clampStrength(numberControl.value);
+      });
+      const initialValue = clampStrength(rangeControl.value);
+      rangeControl.value = initialValue;
+      numberControl.value = initialValue;
+    };
+
+    const syncPreview = (colorSelect, strengthControls, previewEl, previewTextEl) => {
+      if (!colorSelect || !strengthControls.length || !previewEl || !previewTextEl) return;
+      const update = () => {
+        const key = colorSelect.value || 'red';
+        const item = colorMap[key] || colorMap.red;
+        const strength = clampStrength(strengthControls[0].value);
+        const alpha = Math.max(0.4, Math.min(0.85, strength / 100));
+        previewEl.style.background = `linear-gradient(135deg, rgba(${item.rgb}, ${alpha}), rgba(15, 23, 42, 0.08))`;
+        previewEl.style.borderColor = `rgba(${item.rgb}, 0.28)`;
+        previewTextEl.textContent = `${item.label} tint at ${strength}%`;
+        const dot = previewEl.querySelector('span');
+        if (dot) dot.style.background = `rgb(${item.rgb})`;
+      };
+      colorSelect.addEventListener('change', update);
+      strengthControls.forEach((control) => control.addEventListener('input', update));
+      update();
+    };
+
+    syncPair(range, input);
+    syncPair(pinRange, pinInput);
+    syncPreview(loginColor, [range, input], loginPreview, loginPreviewText);
+    syncPreview(pinColor, [pinRange, pinInput], pinPreview, pinPreviewText);
   })();
 </script>
 @endsection

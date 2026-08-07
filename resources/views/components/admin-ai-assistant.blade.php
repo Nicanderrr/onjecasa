@@ -1,63 +1,63 @@
-<div id="ai-assistant-wrapper" class="pos-ai-wrap">
-    <button id="ai-assistant-toggle" class="pos-ai-fab" type="button" aria-label="Open AI assistant">
-        <i class="fas fa-robot"></i>
-        <span class="pos-ai-pulse"></span>
-        <span id="ai-alert-dot" class="pos-ai-alert-dot d-none"></span>
+<div id="ai-assistant-wrapper" class="admin-ai-wrap">
+    <button id="ai-assistant-toggle" class="admin-ai-fab" type="button" aria-label="Open AI assistant">
+        <i class="bi bi-robot"></i>
+        <span class="admin-ai-pulse"></span>
+        <span id="ai-alert-dot" class="admin-ai-alert-dot d-none"></span>
     </button>
 
-    <section id="ai-chat-window" class="pos-ai-panel d-none" aria-label="POS AI assistant chat">
-        <header class="pos-ai-header">
-            <div class="pos-ai-title">
-                <span class="pos-ai-icon"><i class="fas fa-brain"></i></span>
+    <section id="ai-chat-window" class="admin-ai-panel d-none" aria-label="AI assistant chat">
+        <header class="admin-ai-header">
+            <div class="admin-ai-title">
+                <span class="admin-ai-icon"><i class="bi bi-stars"></i></span>
                 <div>
-                    <h6>POS Command AI</h6>
-                    <small>Live System Intel</small>
+                    <h6>NewPOS AI</h6>
+                    <small>Live system intelligence</small>
                 </div>
             </div>
-            <button id="ai-close" class="pos-ai-close" type="button" aria-label="Close AI assistant">
-                <i class="fas fa-times"></i>
+            <button id="ai-close" class="admin-ai-close" type="button" aria-label="Close AI assistant">
+                <i class="bi bi-x-lg"></i>
             </button>
         </header>
 
-        <main id="ai-chat-history" class="pos-ai-history">
+        <main id="ai-chat-history" class="admin-ai-history">
             <div class="ai-msg mb-3 d-flex flex-column align-items-start">
                 <div class="msg-bubble">
                     Hello. I can monitor stock, orders, payments, staff, and sales in real time.
                 </div>
-                <small class="meta">POS AI | JUST NOW</small>
+                <small class="meta">NEWPOS AI | JUST NOW</small>
             </div>
         </main>
 
-        <footer class="pos-ai-footer">
-            <div id="ai-stock-alert" class="pos-ai-stock-alert d-none"></div>
-            <div class="pos-ai-shortcuts">
+        <footer class="admin-ai-footer">
+            <div id="ai-stock-alert" class="admin-ai-stock-alert d-none"></div>
+            <div class="admin-ai-shortcuts">
                 <button type="button" class="ai-shortcut" data-cmd="Give me today's sales summary.">Today Sales</button>
                 <button type="button" class="ai-shortcut" data-cmd="List low stock products and what to restock first.">Low Stock</button>
                 <button type="button" class="ai-shortcut" data-cmd="Show pending operational actions now.">Next Actions</button>
             </div>
-            <div id="ai-upload-preview" class="pos-ai-preview d-none">
+            <div id="ai-upload-preview" class="admin-ai-preview d-none">
                 <div class="d-flex align-items-center overflow-hidden">
-                    <i class="fas fa-file mr-2"></i>
+                    <i class="bi bi-paperclip me-2"></i>
                     <span id="ai-file-name" class="small text-truncate"></span>
                 </div>
                 <button id="ai-remove-file" class="btn btn-link p-0" type="button" aria-label="Remove file">
-                    <i class="fas fa-trash-alt"></i>
+                    <i class="bi bi-trash"></i>
                 </button>
             </div>
 
-            <div class="pos-ai-input-row">
-                <label for="ai-file-input" class="pos-ai-icon-btn mb-0" title="Attach file">
-                    <i class="fas fa-paperclip"></i>
+            <div class="admin-ai-input-row">
+                <label for="ai-file-input" class="admin-ai-icon-btn mb-0" title="Attach file">
+                    <i class="bi bi-paperclip"></i>
                 </label>
                 <input type="file" id="ai-file-input" class="d-none" accept="image/*,.pdf,.doc,.docx">
 
                 <input type="text" id="ai-input" class="form-control" placeholder="Ask anything about the system..." autocomplete="off">
 
-                <button id="ai-voice-btn" class="pos-ai-icon-btn" type="button" title="Voice input">
-                    <i class="fas fa-microphone"></i>
+                <button id="ai-voice-btn" class="admin-ai-icon-btn" type="button" title="Voice input">
+                    <i class="bi bi-mic"></i>
                 </button>
-                <button id="ai-send-btn" class="pos-ai-send" type="button" aria-label="Send">
-                    <i class="fas fa-paper-plane"></i>
+                <button id="ai-send-btn" class="admin-ai-send" type="button" aria-label="Send">
+                    <i class="bi bi-send-fill"></i>
                 </button>
             </div>
         </footer>
@@ -65,52 +65,73 @@
 </div>
 
 <style>
-.pos-ai-wrap { position: fixed; right: 24px; bottom: 24px; z-index: 9999; font-family: "Open Sans", sans-serif; }
-.pos-ai-fab { width: 62px; height: 62px; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #16a34a, #166534); box-shadow: 0 14px 30px rgba(22, 101, 52, 0.45); position: relative; transition: transform .2s ease, box-shadow .2s ease; }
-.pos-ai-fab i { font-size: 22px; position: relative; z-index: 2; }
-.pos-ai-alert-dot { position:absolute; right:2px; top:2px; width:12px; height:12px; border-radius:999px; background:#ef4444; border:2px solid #fff; z-index:3; }
-.pos-ai-fab:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 18px 34px rgba(22, 101, 52, 0.55); }
-.pos-ai-pulse { position: absolute; inset: 0; border-radius: 999px; background: rgba(22, 163, 74, 0.32); animation: pos-ai-pulse 2s infinite; }
-@keyframes pos-ai-pulse { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(1.5); opacity: 0; } }
+.admin-ai-wrap { position: fixed; right: 24px; bottom: 24px; z-index: 9999; font-family: "Segoe UI", Arial, sans-serif; }
+.admin-ai-fab { width: 62px; height: 62px; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #2563eb, #0f766e); box-shadow: 0 14px 30px rgba(37, 99, 235, 0.35); position: relative; transition: transform .2s ease, box-shadow .2s ease; }
+.admin-ai-fab i { font-size: 22px; position: relative; z-index: 2; }
+.admin-ai-alert-dot { position:absolute; right:2px; top:2px; width:12px; height:12px; border-radius:999px; background:#ef4444; border:2px solid #fff; z-index:3; }
+.admin-ai-fab:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 18px 34px rgba(37, 99, 235, 0.45); }
+.admin-ai-pulse { position: absolute; inset: 0; border-radius: 999px; background: rgba(37, 99, 235, 0.25); animation: admin-ai-pulse 2s infinite; }
+@keyframes admin-ai-pulse { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(1.5); opacity: 0; } }
 
-.pos-ai-panel { position: absolute; right: 0; bottom: 78px; width: 390px; height: 620px; background: rgba(8, 15, 30, 0.97); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; overflow: hidden; box-shadow: 0 24px 50px rgba(0, 0, 0, .45); display: flex; flex-direction: column; }
-.pos-ai-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 14px; background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.1); }
-.pos-ai-title { display: flex; align-items: center; gap: 10px; color: #fff; }
-.pos-ai-title h6 { margin: 0; font-weight: 700; }
-.pos-ai-title small { color: #4ade80; }
-.pos-ai-icon { width: 34px; height: 34px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: rgba(34,197,94,.2); color: #86efac; }
-.pos-ai-close { border: 0; background: transparent; color: #9ca3af; width: 34px; height: 34px; border-radius: 8px; }
-.pos-ai-close:hover { color: #fff; background: rgba(255,255,255,.08); }
+.admin-ai-panel {
+  position: absolute;
+  top: auto;
+  right: 0;
+  bottom: 86px;
+  width: 390px;
+  height: min(560px, calc(100vh - 132px));
+  max-height: calc(100vh - 132px);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, .2);
+  display: flex;
+  flex-direction: column;
+}
+.admin-ai-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 14px; background: linear-gradient(135deg, #eff6ff, #f8fafc); border-bottom: 1px solid #dbe4ef; }
+.admin-ai-title { display: flex; align-items: center; gap: 10px; color: #0f172a; }
+.admin-ai-title h6 { margin: 0; font-weight: 800; }
+.admin-ai-title small { color: #2563eb; }
+.admin-ai-icon { width: 34px; height: 34px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: #dbeafe; color: #1d4ed8; }
+.admin-ai-close { border: 0; background: transparent; color: #64748b; width: 34px; height: 34px; border-radius: 8px; }
+.admin-ai-close:hover { color: #0f172a; background: rgba(15,23,42,.06); }
 
-.pos-ai-history { flex: 1; overflow: auto; padding: 14px; }
-.pos-ai-history .msg-bubble { max-width: 86%; padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,.12); color: #fff; line-height: 1.38; font-size: 13px; }
-.ai-msg .msg-bubble { background: rgba(255,255,255,.08); border-top-left-radius: 4px; }
-.user-msg .msg-bubble { background: linear-gradient(135deg, #16a34a, #166534); border-top-right-radius: 4px; }
-.pos-ai-history .meta { color: #9ca3af; margin-top: 4px; font-size: 10px; }
+.admin-ai-history {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px;
+  background: linear-gradient(180deg, #f8fbff, #ffffff);
+  scrollbar-width: thin;
+}
+.admin-ai-history .msg-bubble { max-width: 86%; padding: 10px 12px; border-radius: 14px; border: 1px solid #dbe4ef; color: #0f172a; line-height: 1.38; font-size: 13px; background: #ffffff; }
+.ai-msg .msg-bubble { border-top-left-radius: 4px; }
+.user-msg .msg-bubble { background: linear-gradient(135deg, #2563eb, #0f766e); border-color: transparent; color: #fff; border-top-right-radius: 4px; }
+.admin-ai-history .meta { color: #64748b; margin-top: 4px; font-size: 10px; }
 
-.pos-ai-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,.1); background: #0b1325; }
-.pos-ai-stock-alert { font-size: 12px; color: #fecaca; background: rgba(127, 29, 29, 0.35); border: 1px solid rgba(239, 68, 68, 0.45); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
-.pos-ai-shortcuts { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
-.ai-shortcut { border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#e5e7eb; border-radius:999px; font-size:11px; padding:4px 8px; }
-.ai-shortcut:hover { background:rgba(255,255,255,.12); }
-.pos-ai-preview { display: flex; align-items: center; justify-content: space-between; color: #e5e7eb; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
-.pos-ai-preview button { color: #f87171; }
-.pos-ai-input-row { display: grid; grid-template-columns: 32px 1fr 32px 36px; gap: 8px; align-items: center; }
-.pos-ai-input-row input.form-control { height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.03); color: #fff; font-size: 13px; }
-.pos-ai-input-row input.form-control:focus { border-color: #22c55e; box-shadow: 0 0 0 .18rem rgba(34,197,94,.2); }
-.pos-ai-icon-btn { border: 0; width: 32px; height: 32px; border-radius: 8px; background: transparent; color: #9ca3af; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-.pos-ai-icon-btn:hover { color: #fff; background: rgba(255,255,255,.08); }
-.pos-ai-send { border: 0; width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg, #16a34a, #166534); color: #fff; }
-
-.ai-typing-indicator span { height: 6px; width: 6px; background: #4ade80; display: inline-block; border-radius: 50%; animation: ai-bounce 1.3s infinite ease-in-out; margin: 0 2px; }
+.admin-ai-footer { padding: 12px; border-top: 1px solid #dbe4ef; background: #ffffff; }
+.admin-ai-stock-alert { font-size: 12px; color: #991b1b; background: #fee2e2; border: 1px solid #fecaca; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+.admin-ai-shortcuts { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+.ai-shortcut { border:1px solid #dbe4ef; background:#f8fbff; color:#0f172a; border-radius:999px; font-size:11px; padding:4px 8px; }
+.ai-shortcut:hover { background:#eff6ff; }
+.admin-ai-preview { display: flex; align-items: center; justify-content: space-between; color: #0f172a; background: #f8fbff; border: 1px solid #dbe4ef; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+.admin-ai-preview button { color: #dc2626; }
+.admin-ai-input-row { display: grid; grid-template-columns: 32px 1fr 32px 36px; gap: 8px; align-items: center; }
+.admin-ai-input-row input.form-control { height: 38px; border-radius: 10px; border: 1px solid #dbe4ef; background: #f8fbff; color: #0f172a; font-size: 13px; }
+.admin-ai-input-row input.form-control:focus { border-color: #93c5fd; box-shadow: 0 0 0 .18rem rgba(37,99,235,.15); }
+.admin-ai-icon-btn { border: 0; width: 32px; height: 32px; border-radius: 8px; background: transparent; color: #64748b; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.admin-ai-icon-btn:hover { color: #0f172a; background: rgba(15,23,42,.06); }
+.admin-ai-send { border: 0; width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg, #2563eb, #0f766e); color: #fff; }
+.ai-typing-indicator span { height: 6px; width: 6px; background: #2563eb; display: inline-block; border-radius: 50%; animation: ai-bounce 1.3s infinite ease-in-out; margin: 0 2px; }
 .ai-typing-indicator span:nth-child(2) { animation-delay: .2s; }
 .ai-typing-indicator span:nth-child(3) { animation-delay: .4s; }
 @keyframes ai-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
 @media (max-width: 768px) {
-  .pos-ai-wrap { right: 16px; bottom: 16px; }
-  .pos-ai-fab { width: 56px; height: 56px; }
-  .pos-ai-panel { width: min(94vw, 360px); height: min(78vh, 560px); bottom: 70px; border-radius: 14px; }
+  .admin-ai-wrap { right: 16px; bottom: 16px; }
+  .admin-ai-fab { width: 56px; height: 56px; }
+  .admin-ai-panel { top: auto; width: min(94vw, 360px); height: min(72vh, calc(100vh - 104px)); max-height: calc(100vh - 104px); bottom: 66px; border-radius: 14px; }
 }
 </style>
 
@@ -233,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
         recognition.onstart = function() {
             isListening = true;
             voiceBtn.classList.add('text-danger');
-            voiceBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+            voiceBtn.innerHTML = '<i class="bi bi-mic-mute"></i>';
         };
         recognition.onresult = function(event) {
             input.value = event.results[0][0].transcript;
@@ -242,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
         recognition.onend = function() {
             isListening = false;
             voiceBtn.classList.remove('text-danger');
-            voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            voiceBtn.innerHTML = '<i class="bi bi-mic"></i>';
         };
         recognition.onerror = recognition.onend;
         voiceBtn.addEventListener('click', function() {
@@ -272,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const div = document.createElement('div');
         div.className = role + '-msg mb-3 d-flex flex-column ' + (role === 'user' ? 'align-items-end' : 'align-items-start');
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const label = role === 'user' ? 'YOU' : 'POS AI';
+        const label = role === 'user' ? 'YOU' : 'NEWPOS AI';
         div.innerHTML = '<div class="msg-bubble">' + String(text).replace(/\n/g, '<br>') + '</div><small class="meta">' + label + ' | ' + timestamp + '</small>';
         historyEl.appendChild(div);
         historyEl.scrollTop = historyEl.scrollHeight;
