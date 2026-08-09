@@ -22,9 +22,10 @@ class SettingsController extends Controller
         $pinOverlay = $this->intSetting('admin_pin_overlay', 72);
         $pinOverlayColor = $this->settingValue('admin_pin_overlay_color') ?: 'green';
         $darkMode = $this->settingValue('admin_dark_mode') === '1';
+        $mouseTrailEnabled = $this->settingValue('global_mouse_trail') !== '0';
         $systemName = $this->settingValue('system_name') ?: 'POS';
         $sidebarLogo = $this->settingValue('sidebar_logo');
-        return view('admin.settings.index', compact('loginImage', 'loginOverlay', 'loginOverlayColor', 'pinImage', 'pinOverlay', 'pinOverlayColor', 'darkMode', 'systemName', 'sidebarLogo'));
+        return view('admin.settings.index', compact('loginImage', 'loginOverlay', 'loginOverlayColor', 'pinImage', 'pinOverlay', 'pinOverlayColor', 'darkMode', 'mouseTrailEnabled', 'systemName', 'sidebarLogo'));
     }
 
     public function update(Request $request): RedirectResponse
@@ -41,6 +42,7 @@ class SettingsController extends Controller
             'pin_overlay' => ['nullable', 'integer', 'min:40', 'max:85'],
             'pin_overlay_color' => ['nullable', 'in:red,blue,green,amber,slate,purple'],
             'dark_mode' => ['nullable', 'in:0,1'],
+            'global_mouse_trail' => ['nullable', 'in:0,1'],
             'system_name' => ['nullable', 'string', 'max:30'],
             'sidebar_logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:2048'],
         ]);
@@ -146,6 +148,14 @@ class SettingsController extends Controller
                 'created_at' => now(),
             ]
         );
+        DB::table('pos_settings')->updateOrInsert(
+            ['key' => 'global_mouse_trail'],
+            [
+                'value' => $request->boolean('global_mouse_trail') ? '1' : '0',
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
         DB::table('pos_settings')->updateOrInsert(['key' => 'system_name'], ['value' => (string)($data['system_name'] ?? 'POS'), 'updated_at' => now(), 'created_at' => now()]);
 
         if ($request->hasFile('sidebar_logo')) {
@@ -186,6 +196,7 @@ class SettingsController extends Controller
                     'pin_overlay' => (int) ($data['pin_overlay'] ?? 72),
                     'pin_overlay_color' => $data['pin_overlay_color'] ?? 'green',
                     'dark_mode' => $request->boolean('dark_mode'),
+                    'mouse_trail' => $request->boolean('global_mouse_trail'),
                     'system_name' => $data['system_name'] ?? 'POS',
                     'sidebar_logo_changed' => $request->hasFile('sidebar_logo'),
                 ],

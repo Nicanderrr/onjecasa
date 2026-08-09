@@ -1,28 +1,81 @@
 @extends('layouts.admin')
 
+@section('title', 'Audit Trail - NewPOS')
+@section('page-eyebrow', 'System')
+@section('page-title', 'Audit Trail')
+@section('page-description', 'Review user actions, system events, and target details across the workspace.')
+@section('page-actions')
+  <form class="d-flex flex-wrap gap-2" method="GET" action="{{ route('admin.audit-trails.index') }}">
+    <select class="form-select form-select-sm" name="event" style="min-width: 220px;">
+      <option value="">All Events</option>
+      @foreach($events as $event)
+        <option value="{{ $event }}" @selected(($filters['event'] ?? '') === $event)>{{ ucwords(str_replace('_', ' ', $event)) }}</option>
+      @endforeach
+    </select>
+    <input class="form-control form-control-sm" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search audits" style="min-width: 220px;">
+    <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-search"></i> Filter</button>
+  </form>
+@endsection
+
 @section('content')
-<div class="card shadow">
-  <div class="card-header border-0">
-    <div class="d-flex flex-wrap align-items-center justify-content-between">
+@php
+  $latestAuditAt = $summary['latest_audit_at']
+    ? \Illuminate\Support\Carbon::parse($summary['latest_audit_at'])
+    : null;
+@endphp
+
+<section class="row g-2 dashboard-metrics entity-metrics audit-metrics" aria-label="Audit trail summary">
+  <div class="col-12 col-md-6 col-xl-3">
+    <article class="metric-card">
+      <div class="metric-top"><span class="metric-label">Audit Entries</span><span class="metric-icon"><i class="bi bi-journal-text"></i></span></div>
+      <div class="metric-value">{{ number_format($summary['audit_count']) }}</div>
+      <div class="metric-meta"><span class="text-success">All time</span><span>logged actions</span></div>
+    </article>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <article class="metric-card">
+      <div class="metric-top"><span class="metric-label">Today</span><span class="metric-icon"><i class="bi bi-calendar-day"></i></span></div>
+      <div class="metric-value">{{ number_format($summary['today_count']) }}</div>
+      <div class="metric-meta"><span class="text-primary">Current day</span><span>activity</span></div>
+    </article>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <article class="metric-card">
+      <div class="metric-top"><span class="metric-label">Admin Events</span><span class="metric-icon"><i class="bi bi-shield-check"></i></span></div>
+      <div class="metric-value">{{ number_format($summary['admin_count']) }}</div>
+      <div class="metric-meta"><span class="text-warning">Admin users</span><span>workspace changes</span></div>
+    </article>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <article class="metric-card">
+      <div class="metric-top"><span class="metric-label">Latest Event</span><span class="metric-icon"><i class="bi bi-clock-history"></i></span></div>
+      <div class="metric-value">{{ $latestAuditAt ? $latestAuditAt->format('d M') : '—' }}</div>
+      <div class="metric-meta"><span class="text-info">{{ $latestAuditAt ? $latestAuditAt->format('h:i A') : 'No activity' }}</span><span>most recent</span></div>
+    </article>
+  </div>
+</section>
+
+<div class="card shadow entity-card audit-card mt-3">
+  <div class="card-header border-0 entity-toolbar audit-toolbar">
+    <div class="audit-table-heading">
+      <span class="audit-table-icon"><i class="bi bi-shield-lock"></i></span>
       <div>
-        <h3 class="mb-0">Audit Trail</h3>
-        <p class="text-muted mb-0">Recent user and system actions across the POS.</p>
+        <strong>Audit register</strong>
+        <span>
+          {{ $audits->total() }} {{ \Illuminate\Support\Str::plural('entry', $audits->total()) }} recorded
+          @if($latestAuditAt)
+            · latest {{ $latestAuditAt->format('d M Y, h:i A') }}
+          @endif
+        </span>
       </div>
-      <form class="form-inline mt-3 mt-md-0" method="GET" action="{{ route('admin.audit-trails.index') }}">
-        <select class="form-control mr-2 mb-2 mb-md-0" name="event">
-          <option value="">All Events</option>
-          @foreach($events as $event)
-            <option value="{{ $event }}" @selected(($filters['event'] ?? '') === $event)>{{ ucwords(str_replace('_', ' ', $event)) }}</option>
-          @endforeach
-        </select>
-        <input class="form-control mr-2 mb-2 mb-md-0" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search audit trail">
-        <button class="btn btn-primary mb-2 mb-md-0" type="submit"><i class="fas fa-search"></i> Filter</button>
-      </form>
+    </div>
+    <div class="audit-toolbar-note">
+      <span><i class="bi bi-info-circle"></i> Sensitive fields are redacted before storage.</span>
     </div>
   </div>
 
   <div class="table-responsive">
-    <table class="table align-items-center table-flush">
+    <table class="table align-items-center table-flush audit-table" id="audit-table">
       <thead class="thead-light">
         <tr>
           <th>Time</th>
@@ -36,27 +89,45 @@
       </thead>
       <tbody>
         @forelse($audits as $audit)
-          <tr>
-            <td>{{ \Illuminate\Support\Carbon::parse($audit->created_at)->format('M d, Y H:i') }}</td>
+          @php
+            $eventKey = \Illuminate\Support\Str::slug($audit->event ?: 'event');
+            $details = $audit->properties ? json_decode($audit->properties, true) : null;
+            $detailsJson = $details ? json_encode($details, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : null;
+          @endphp
+          <tr data-filter-row>
             <td>
-              <strong>{{ $audit->user_name ?: 'System' }}</strong>
-              @if($audit->user_role)<br><small class="text-muted">{{ ucfirst($audit->user_role) }}</small>@endif
+              <div class="audit-time">
+                <strong>{{ \Illuminate\Support\Carbon::parse($audit->created_at)->format('d M Y') }}</strong>
+                <span>{{ \Illuminate\Support\Carbon::parse($audit->created_at)->format('h:i A') }}</span>
+              </div>
             </td>
-            <td><span class="badge badge-info">{{ ucwords(str_replace('_', ' ', $audit->event)) }}</span></td>
-            <td>{{ $audit->description }}</td>
+            <td>
+              <div class="audit-user">
+                <span class="audit-user-avatar">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($audit->user_name ?: 'System', 0, 1)) }}</span>
+                <div>
+                  <strong>{{ $audit->user_name ?: 'System' }}</strong>
+                  <span>{{ $audit->user_role ? ucfirst($audit->user_role) : 'Automated' }}</span>
+                </div>
+              </div>
+            </td>
+            <td><span class="audit-event audit-event-{{ $eventKey }}">{{ ucwords(str_replace('_', ' ', $audit->event)) }}</span></td>
+            <td class="audit-description">{{ $audit->description }}</td>
             <td>
               @if($audit->auditable_type)
-                {{ $audit->auditable_type }} #{{ $audit->auditable_id }}
+                <div class="audit-target">
+                  <strong>{{ class_basename($audit->auditable_type) }}</strong>
+                  <span>#{{ $audit->auditable_id }}</span>
+                </div>
               @else
                 <span class="text-muted">-</span>
               @endif
             </td>
-            <td>{{ $audit->ip_address ?: '-' }}</td>
-            <td style="max-width: 280px;">
-              @if($audit->properties)
-                <details>
-                  <summary class="text-primary" style="cursor:pointer;">View</summary>
-                  <pre class="mt-2 mb-0 small" style="white-space:pre-wrap;">{{ json_encode(json_decode($audit->properties, true), JSON_PRETTY_PRINT) }}</pre>
+            <td><span class="audit-ip">{{ $audit->ip_address ?: '-' }}</span></td>
+            <td>
+              @if($detailsJson)
+                <details class="audit-details">
+                  <summary><i class="bi bi-three-dots"></i> View</summary>
+                  <pre>{{ $detailsJson }}</pre>
                 </details>
               @else
                 <span class="text-muted">-</span>
@@ -64,14 +135,21 @@
             </td>
           </tr>
         @empty
-          <tr><td colspan="7" class="text-center text-muted py-5">No audit entries found.</td></tr>
+          <tr data-filter-empty>
+            <td colspan="7" class="text-center py-5 text-muted">No audit entries found.</td>
+          </tr>
         @endforelse
+        @if($audits->count())
+          <tr data-filter-empty style="display:none;">
+            <td colspan="7" class="text-center py-5 text-muted">No matching audit entries found.</td>
+          </tr>
+        @endif
       </tbody>
     </table>
   </div>
 
-  <div class="card-footer py-4">
-    {{ $audits->links() }}
-  </div>
+  @if($audits->hasPages())
+    <div class="audit-pagination">{{ $audits->links('pagination::bootstrap-5') }}</div>
+  @endif
 </div>
 @endsection

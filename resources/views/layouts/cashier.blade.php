@@ -45,8 +45,12 @@
       overflow: hidden;
       padding: .55rem;
       border-radius: 1.3rem;
-      background: rgba(255, 255, 255, 0.98);
+      background: var(--admin-surface);
       box-shadow: 0 20px 40px -28px rgba(15, 23, 42, 0.75);
+    }
+
+    html[data-theme="dark"] .brand-icon {
+      background: var(--admin-surface);
     }
 
     .brand-copy { display: grid; place-items: center; gap: .15rem; text-align: center; }
@@ -216,6 +220,7 @@
   ];
 @endphp
 <body>
+  <x-shared.mouse-trail />
   <div class="admin-shell">
     <div class="sidebar-backdrop" data-sidebar-close></div>
 

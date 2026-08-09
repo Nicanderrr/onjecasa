@@ -66,7 +66,8 @@
 
 <style>
 .admin-ai-wrap { position: fixed; right: 24px; bottom: 24px; z-index: 9999; font-family: "Segoe UI", Arial, sans-serif; }
-.admin-ai-fab { width: 62px; height: 62px; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #2563eb, #0f766e); box-shadow: 0 14px 30px rgba(37, 99, 235, 0.35); position: relative; transition: transform .2s ease, box-shadow .2s ease; }
+.admin-ai-wrap.is-dragging .admin-ai-fab { cursor: grabbing; }
+.admin-ai-fab { width: 62px; height: 62px; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #2563eb, #0f766e); box-shadow: 0 14px 30px rgba(37, 99, 235, 0.35); position: relative; transition: transform .2s ease, box-shadow .2s ease, opacity .15s ease; cursor: grab; touch-action: none; user-select: none; }
 .admin-ai-fab i { font-size: 22px; position: relative; z-index: 2; }
 .admin-ai-alert-dot { position:absolute; right:2px; top:2px; width:12px; height:12px; border-radius:999px; background:#ef4444; border:2px solid #fff; z-index:3; }
 .admin-ai-fab:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 18px 34px rgba(37, 99, 235, 0.45); }
@@ -81,7 +82,7 @@
   width: 390px;
   height: min(560px, calc(100vh - 132px));
   max-height: calc(100vh - 132px);
-  background: rgba(255, 255, 255, 0.98);
+  background: var(--admin-surface);
   border: 1px solid #dbe4ef;
   border-radius: 8px;
   overflow: hidden;
@@ -89,7 +90,7 @@
   display: flex;
   flex-direction: column;
 }
-.admin-ai-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 14px; background: linear-gradient(135deg, #eff6ff, #f8fafc); border-bottom: 1px solid #dbe4ef; }
+.admin-ai-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 14px; background: var(--admin-surface-soft); border-bottom: 1px solid #dbe4ef; }
 .admin-ai-title { display: flex; align-items: center; gap: 10px; color: #0f172a; }
 .admin-ai-title h6 { margin: 0; font-weight: 800; }
 .admin-ai-title small { color: #2563eb; }
@@ -102,23 +103,23 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 14px;
-  background: linear-gradient(180deg, #f8fbff, #ffffff);
+  background: var(--admin-surface);
   scrollbar-width: thin;
 }
-.admin-ai-history .msg-bubble { max-width: 86%; padding: 10px 12px; border-radius: 14px; border: 1px solid #dbe4ef; color: #0f172a; line-height: 1.38; font-size: 13px; background: #ffffff; }
+.admin-ai-history .msg-bubble { max-width: 86%; padding: 10px 12px; border-radius: 14px; border: 1px solid #dbe4ef; color: #0f172a; line-height: 1.38; font-size: 13px; background: var(--admin-surface); }
 .ai-msg .msg-bubble { border-top-left-radius: 4px; }
 .user-msg .msg-bubble { background: linear-gradient(135deg, #2563eb, #0f766e); border-color: transparent; color: #fff; border-top-right-radius: 4px; }
 .admin-ai-history .meta { color: #64748b; margin-top: 4px; font-size: 10px; }
 
-.admin-ai-footer { padding: 12px; border-top: 1px solid #dbe4ef; background: #ffffff; }
+.admin-ai-footer { padding: 12px; border-top: 1px solid #dbe4ef; background: var(--admin-surface); }
 .admin-ai-stock-alert { font-size: 12px; color: #991b1b; background: #fee2e2; border: 1px solid #fecaca; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
 .admin-ai-shortcuts { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
 .ai-shortcut { border:1px solid #dbe4ef; background:#f8fbff; color:#0f172a; border-radius:999px; font-size:11px; padding:4px 8px; }
 .ai-shortcut:hover { background:#eff6ff; }
-.admin-ai-preview { display: flex; align-items: center; justify-content: space-between; color: #0f172a; background: #f8fbff; border: 1px solid #dbe4ef; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+.admin-ai-preview { display: flex; align-items: center; justify-content: space-between; color: #0f172a; background: var(--admin-surface-soft); border: 1px solid #dbe4ef; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
 .admin-ai-preview button { color: #dc2626; }
 .admin-ai-input-row { display: grid; grid-template-columns: 32px 1fr 32px 36px; gap: 8px; align-items: center; }
-.admin-ai-input-row input.form-control { height: 38px; border-radius: 10px; border: 1px solid #dbe4ef; background: #f8fbff; color: #0f172a; font-size: 13px; }
+.admin-ai-input-row input.form-control { height: 38px; border-radius: 10px; border: 1px solid #dbe4ef; background: var(--admin-surface-soft); color: #0f172a; font-size: 13px; }
 .admin-ai-input-row input.form-control:focus { border-color: #93c5fd; box-shadow: 0 0 0 .18rem rgba(37,99,235,.15); }
 .admin-ai-icon-btn { border: 0; width: 32px; height: 32px; border-radius: 8px; background: transparent; color: #64748b; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .admin-ai-icon-btn:hover { color: #0f172a; background: rgba(15,23,42,.06); }
@@ -150,14 +151,86 @@ document.addEventListener('DOMContentLoaded', function() {
     const removeFileBtn = document.getElementById('ai-remove-file');
     const stockAlert = document.getElementById('ai-stock-alert');
     const alertDot = document.getElementById('ai-alert-dot');
-    if (!toggle || !windowEl || !input || !sendBtn || !historyEl) return;
+    const wrapper = document.getElementById('ai-assistant-wrapper');
+    if (!toggle || !windowEl || !input || !sendBtn || !historyEl || !wrapper) return;
 
     let chatHistory = [];
     let isListening = false;
     let selectedFile = null;
     let lowStockAlertShown = false;
+    let dragState = {
+        active: false,
+        moved: false,
+        startX: 0,
+        startY: 0,
+        pointerId: null,
+        rect: null
+    };
+    const positionStorageKey = 'adminHMD.aiAssistantPosition';
+
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    function getSavedPosition() {
+        try {
+            const raw = window.localStorage.getItem(positionStorageKey);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (typeof parsed.left !== 'number' || typeof parsed.top !== 'number') return null;
+            return parsed;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    function savePosition(left, top) {
+        try {
+            window.localStorage.setItem(positionStorageKey, JSON.stringify({ left, top }));
+        } catch (_) {}
+    }
+
+    function setWrapperPosition(left, top) {
+        wrapper.style.left = left + 'px';
+        wrapper.style.top = top + 'px';
+        wrapper.style.right = 'auto';
+        wrapper.style.bottom = 'auto';
+        savePosition(left, top);
+    }
+
+    function applyInitialPosition() {
+        const saved = getSavedPosition();
+        if (saved) {
+            const maxLeft = Math.max(0, window.innerWidth - wrapper.offsetWidth);
+            const maxTop = Math.max(0, window.innerHeight - wrapper.offsetHeight);
+            setWrapperPosition(clamp(saved.left, 0, maxLeft), clamp(saved.top, 0, maxTop));
+            return;
+        }
+
+        const maxLeft = Math.max(0, window.innerWidth - wrapper.offsetWidth);
+        const maxTop = Math.max(0, window.innerHeight - wrapper.offsetHeight);
+        const initialLeft = Math.max(0, maxLeft - 24);
+        const initialTop = Math.max(0, maxTop - 24);
+        setWrapperPosition(initialLeft, initialTop);
+    }
+
+    function keepInViewport() {
+        const rect = wrapper.getBoundingClientRect();
+        const maxLeft = Math.max(0, window.innerWidth - rect.width);
+        const maxTop = Math.max(0, window.innerHeight - rect.height);
+        const left = clamp(rect.left, 0, maxLeft);
+        const top = clamp(rect.top, 0, maxTop);
+        setWrapperPosition(left, top);
+    }
+
+    applyInitialPosition();
+    window.addEventListener('resize', keepInViewport);
 
     toggle.addEventListener('click', () => {
+        if (dragState.moved) {
+            dragState.moved = false;
+            return;
+        }
         windowEl.classList.toggle('d-none');
         if (!windowEl.classList.contains('d-none')) {
             input.focus();
@@ -165,6 +238,65 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     closeBtn.addEventListener('click', () => windowEl.classList.add('d-none'));
+
+    toggle.addEventListener('pointerdown', function(event) {
+        dragState.active = true;
+        dragState.moved = false;
+        dragState.pointerId = event.pointerId;
+        dragState.rect = wrapper.getBoundingClientRect();
+        dragState.startX = event.clientX;
+        dragState.startY = event.clientY;
+        wrapper.classList.add('is-dragging');
+        toggle.setPointerCapture?.(event.pointerId);
+    });
+
+    window.addEventListener('pointermove', function(event) {
+        if (!dragState.active || dragState.pointerId !== event.pointerId) return;
+
+        const deltaX = event.clientX - dragState.startX;
+        const deltaY = event.clientY - dragState.startY;
+
+        if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
+            dragState.moved = true;
+        }
+
+        const rect = dragState.rect || wrapper.getBoundingClientRect();
+        const maxLeft = Math.max(0, window.innerWidth - rect.width);
+        const maxTop = Math.max(0, window.innerHeight - rect.height);
+        const left = clamp(rect.left + deltaX, 0, maxLeft);
+        const top = clamp(rect.top + deltaY, 0, maxTop);
+        wrapper.style.left = left + 'px';
+        wrapper.style.top = top + 'px';
+        wrapper.style.right = 'auto';
+        wrapper.style.bottom = 'auto';
+    });
+
+    window.addEventListener('pointerup', function(event) {
+        if (dragState.pointerId !== event.pointerId) return;
+
+        if (dragState.active) {
+            const rect = wrapper.getBoundingClientRect();
+            savePosition(rect.left, rect.top);
+        }
+
+        dragState.active = false;
+        dragState.pointerId = null;
+        dragState.rect = null;
+        wrapper.classList.remove('is-dragging');
+
+        window.setTimeout(function() {
+            dragState.moved = false;
+        }, 0);
+    });
+
+    window.addEventListener('pointercancel', function(event) {
+        if (dragState.pointerId !== event.pointerId) return;
+        dragState.active = false;
+        dragState.pointerId = null;
+        dragState.rect = null;
+        wrapper.classList.remove('is-dragging');
+        dragState.moved = false;
+    });
 
     async function sendMessage() {
         const text = input.value.trim();

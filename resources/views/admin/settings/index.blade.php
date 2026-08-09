@@ -152,6 +152,18 @@
                   </div>
                 </div>
               </div>
+              <div class="col-md-4">
+                <label class="form-label">Mouse Trail</label>
+                <div class="settings-toggle-row">
+                  <div class="settings-switch">
+                    <div class="form-check form-switch mb-0">
+                      <input type="checkbox" class="form-check-input" id="global_mouse_trail" name="global_mouse_trail" value="1" {{ !empty($mouseTrailEnabled) ? 'checked' : '' }}>
+                    </div>
+                    <label class="form-check-label mb-0" for="global_mouse_trail">Enable cursor trail effect</label>
+                  </div>
+                </div>
+                <div class="settings-help">Turn this off if you want a cleaner interface without the animated cursor effect.</div>
+              </div>
             </div>
           </div>
 

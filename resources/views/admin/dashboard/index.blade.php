@@ -2,47 +2,47 @@
 @section('content')
 <section class="row g-3 mt-1 dashboard-metrics" aria-label="Dashboard metrics">
   <div class="col-12 col-sm-6 col-xl-3">
-    <article class="metric-card metric-primary">
+    <a class="metric-card metric-link metric-primary" href="{{ route('admin.products.index') }}" aria-label="Open products">
       <div class="metric-top">
         <span class="metric-label">Products</span>
         <span class="metric-icon"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
       </div>
       <div class="metric-value">{{ $stats['product_count'] }}</div>
       <div class="metric-meta"><span class="text-success">Inventory</span><span>items listed</span></div>
-    </article>
+    </a>
   </div>
 
   <div class="col-12 col-sm-6 col-xl-3">
-    <article class="metric-card metric-success">
+    <a class="metric-card metric-link metric-success" href="{{ route('admin.orders.index') }}" aria-label="Open orders">
       <div class="metric-top">
         <span class="metric-label">Orders</span>
         <span class="metric-icon"><i class="bi bi-cart-check" aria-hidden="true"></i></span>
       </div>
       <div class="metric-value">{{ $stats['order_count'] }}</div>
       <div class="metric-meta"><span class="text-success">Live</span><span>order count</span></div>
-    </article>
+    </a>
   </div>
 
   <div class="col-12 col-sm-6 col-xl-3">
-    <article class="metric-card metric-warning">
+    <a class="metric-card metric-link metric-warning" href="{{ route('admin.sales.index') }}" aria-label="Open sales">
       <div class="metric-top">
         <span class="metric-label">Sales</span>
         <span class="metric-icon"><i class="bi bi-currency-dollar" aria-hidden="true"></i></span>
       </div>
       <div class="metric-value">{{ number_format($stats['sales_total'], 2) }}</div>
       <div class="metric-meta"><span class="text-success">Total</span><span>revenue</span></div>
-    </article>
+    </a>
   </div>
 
   <div class="col-12 col-sm-6 col-xl-3">
-    <article class="metric-card metric-danger">
+    <a class="metric-card metric-link metric-danger" href="{{ route('admin.staff.index') }}" aria-label="Open cashiers">
       <div class="metric-top">
-        <span class="metric-label">AI Assistant</span>
-        <span class="metric-icon"><i class="bi bi-robot" aria-hidden="true"></i></span>
+        <span class="metric-label">Active Cashiers</span>
+        <span class="metric-icon"><i class="bi bi-person-badge" aria-hidden="true"></i></span>
       </div>
-      <div class="metric-value">Online</div>
-      <div class="metric-meta"><span class="text-danger">Ask</span><span>for insights</span></div>
-    </article>
+      <div class="metric-value">{{ $stats['cashier_count'] }}</div>
+      <div class="metric-meta"><span class="text-danger">Access</span><span>enabled accounts</span></div>
+    </a>
   </div>
 </section>
 
@@ -80,6 +80,39 @@
   </div>
 </section>
 
+<section class="row g-3 mt-1" aria-label="Cashier performance">
+  <div class="col-12">
+    <div class="panel cashier-performance-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="h5 mb-1 section-title"><i class="bi bi-people" aria-hidden="true"></i><span>Cashier Performance</span></h2>
+          <p class="text-muted mb-0">Order volume and sales value attributed to each cashier account.</p>
+        </div>
+        <a class="btn btn-light btn-sm" href="{{ route('admin.staff.index') }}">Manage Cashiers</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0 cashier-performance-table">
+          <thead><tr><th>Cashier</th><th>Access</th><th>Orders</th><th>Sales</th><th>Average Order</th><th>Last Sale</th></tr></thead>
+          <tbody>
+            @forelse($cashierPerformance as $cashier)
+              <tr>
+                <td><div class="dashboard-cashier"><span>{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($cashier->name, 0, 1)) }}</span><div><strong>{{ $cashier->name }}</strong><small>{{ $cashier->email }}</small></div></div></td>
+                <td><span class="cashier-access {{ $cashier->is_active ? 'active' : 'inactive' }}"><span></span>{{ $cashier->is_active ? 'Active' : 'Inactive' }}</span></td>
+                <td><strong>{{ (int) $cashier->order_count }}</strong></td>
+                <td><span class="cashier-sales">{{ number_format((float) $cashier->sales_total, 2) }}</span></td>
+                <td>{{ number_format((float) $cashier->average_order, 2) }}</td>
+                <td><span class="cashier-last-sale">{{ $cashier->last_sale_at ? \Illuminate\Support\Carbon::parse($cashier->last_sale_at)->format('d M Y, h:i A') : 'No sales yet' }}</span></td>
+              </tr>
+            @empty
+              <tr><td colspan="6" class="text-center py-5 text-muted">Cashier performance will appear after a cashier account is added.</td></tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="row g-3 mt-1">
   <div class="col-12 col-xl-8">
     <div class="panel recent-orders-panel">
@@ -93,13 +126,14 @@
       <div class="table-responsive">
         <table class="table align-middle mb-0">
           <thead>
-            <tr><th scope="col">Code</th><th scope="col">Customer</th><th scope="col">Total</th><th scope="col">Status</th><th scope="col">Date</th></tr>
+            <tr><th scope="col">Code</th><th scope="col">Customer</th><th scope="col">Cashier</th><th scope="col">Total</th><th scope="col">Status</th><th scope="col">Date</th></tr>
           </thead>
           <tbody>
             @foreach($orders as $o)
               <tr>
                 <td>{{ $o->code }}</td>
                 <td>{{ $o->customer_name }}</td>
+                <td>{{ $o->cashier_name ?: 'Unknown' }}</td>
                 <td>{{ number_format($o->grand_total, 2) }}</td>
                 <td><span class="badge text-bg-success">{{ $o->status }}</span></td>
                 <td>{{ $o->created_at }}</td>
@@ -122,6 +156,7 @@
       <div class="d-grid gap-2">
         <a class="btn btn-primary" href="{{ route('admin.orders.create') }}"><i class="bi bi-plus-circle"></i> New Order</a>
         <a class="btn btn-outline-secondary" href="{{ route('admin.products.create') }}"><i class="bi bi-box-seam"></i> Add Product</a>
+        <a class="btn btn-outline-secondary" href="{{ route('admin.staff.create') }}"><i class="bi bi-person-plus"></i> Add Cashier</a>
         <a class="btn btn-outline-secondary" href="{{ route('admin.ai.index') }}"><i class="bi bi-robot"></i> Open AI Assistant</a>
       </div>
     </div>

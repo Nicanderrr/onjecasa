@@ -152,7 +152,27 @@ class OrderController extends Controller
 
     public function index(): View
     {
-        $orders = DB::table('pos_orders')->orderByDesc('id')->paginate(20);
+        $itemTotals = DB::table('pos_order_items')
+            ->selectRaw('order_id, SUM(qty) as item_count')
+            ->groupBy('order_id');
+
+        $payments = DB::table('pos_payments')
+            ->selectRaw('order_id, MAX(method) as payment_method')
+            ->groupBy('order_id');
+
+        $orders = DB::table('pos_orders as orders')
+            ->leftJoin('users as cashier', 'cashier.id', '=', 'orders.cashier_user_id')
+            ->leftJoinSub($itemTotals, 'item_totals', fn ($join) => $join->on('item_totals.order_id', '=', 'orders.id'))
+            ->leftJoinSub($payments, 'payments', fn ($join) => $join->on('payments.order_id', '=', 'orders.id'))
+            ->select([
+                'orders.*',
+                'cashier.name as cashier_name',
+                'item_totals.item_count',
+                'payments.payment_method',
+            ])
+            ->orderByDesc('orders.id')
+            ->paginate(20);
+
         return view('admin.orders.index', compact('orders'));
     }
 

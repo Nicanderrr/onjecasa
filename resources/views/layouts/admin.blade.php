@@ -284,6 +284,67 @@
       width: calc(100% - 18rem);
     }
 
+    body.sidebar-mini .admin-main {
+      margin-left: 84px;
+      width: calc(100% - 84px);
+    }
+
+    body.sidebar-mini .admin-sidebar {
+      width: 84px;
+    }
+
+    body.sidebar-mini .sidebar-header,
+    body.sidebar-mini .sidebar-footer {
+      margin-inline: .6rem;
+      padding-inline: 0;
+    }
+
+    body.sidebar-mini .brand-mark {
+      padding: .85rem .55rem;
+      gap: .6rem;
+    }
+
+    body.sidebar-mini .brand-icon {
+      width: 3.9rem;
+      height: 3.9rem;
+    }
+
+    body.sidebar-mini .brand-copy,
+    body.sidebar-mini .admin-nav-group-title,
+    body.sidebar-mini .admin-nav-group-count,
+    body.sidebar-mini .admin-nav-group-icon,
+    body.sidebar-mini .sidebar-status-text,
+    body.sidebar-mini .sidebar-footer-text {
+      display: none;
+    }
+
+    body.sidebar-mini .sidebar-nav {
+      gap: .6rem;
+      padding-inline: .6rem;
+    }
+
+    body.sidebar-mini .admin-nav-group-summary {
+      justify-content: center;
+      padding: .8rem .55rem;
+    }
+
+    body.sidebar-mini .admin-nav-group-meta {
+      justify-content: center;
+    }
+
+    body.sidebar-mini .admin-nav-group-symbol {
+      width: 2.8rem;
+      height: 2.8rem;
+    }
+
+    body.sidebar-mini .admin-nav-group-links {
+      display: none;
+    }
+
+    body.sidebar-mini .admin-nav-group {
+      border-radius: 1rem;
+    }
+
     .page-heading .page-icon {
       background: #dbeafe;
       color: #1d4ed8;
@@ -394,11 +455,6 @@
           'icon' => 'editorial',
           'links' => [
               [
-                  'label' => 'Employees',
-                  'route' => route('admin.staff.index'),
-                  'pattern' => 'admin.staff.*',
-              ],
-              [
                   'label' => 'Products',
                   'route' => route('admin.products.index'),
                   'pattern' => 'admin.products.*',
@@ -407,6 +463,17 @@
                   'label' => 'Categories',
                   'route' => route('admin.categories.index'),
                   'pattern' => 'admin.categories.*',
+              ],
+          ],
+      ],
+      [
+          'label' => 'Users',
+          'icon' => 'users',
+          'links' => [
+              [
+                  'label' => 'Cashiers',
+                  'route' => route('admin.staff.index'),
+                  'pattern' => 'admin.staff.*',
               ],
           ],
       ],
@@ -471,6 +538,7 @@
   ];
 @endphp
 <body>
+  <x-shared.mouse-trail />
   <div class="admin-shell">
     <div class="sidebar-backdrop" data-sidebar-close></div>
 
@@ -519,6 +587,13 @@
                       <svg viewBox="0 0 24 24" fill="none">
                         <path d="M4 7.75A2.75 2.75 0 0 1 6.75 5h10.5A2.75 2.75 0 0 1 20 7.75v5.5A2.75 2.75 0 0 1 17.25 16H6.75A2.75 2.75 0 0 1 4 13.25v-5.5Z" stroke="currentColor" stroke-width="1.8"/>
                         <path d="M12 16v3M8.5 19h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      </svg>
+                      @break
+                    @case('users')
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M16.5 19.5v-1.2a3.3 3.3 0 0 0-3.3-3.3H10.8a3.3 3.3 0 0 0-3.3 3.3v1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M12 12.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M18.8 19.5v-1a2.7 2.7 0 0 0-1.9-2.6M15.9 6.6a3.1 3.1 0 0 1 0 6.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
                       </svg>
                       @break
                     @case('system')
@@ -573,13 +648,24 @@
                 <img class="avatar-img avatar-sm" src="{{ $userAvatar }}" alt="{{ $userName }}">
                 <span class="profile-name d-none d-sm-inline">{{ $userName }}</span>
               </button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><span class="dropdown-item-text">{{ $userEmail }}</span></li>
-                <li><hr class="dropdown-divider"></li>
+              <ul class="dropdown-menu dropdown-menu-end profile-menu">
+                <li>
+                  <div class="profile-menu-card">
+                    <img class="avatar-img avatar-sm profile-menu-avatar" src="{{ $userAvatar }}" alt="{{ $userName }}">
+                    <div>
+                      <strong>{{ $userName }}</strong>
+                      <span>{{ $userEmail }}</span>
+                    </div>
+                  </div>
+                </li>
+                <li><hr class="dropdown-divider profile-menu-divider"></li>
                 <li>
                   <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button class="dropdown-item" type="submit">Sign out</button>
+                    <button class="dropdown-item profile-menu-logout" type="submit">
+                      <i class="bi bi-box-arrow-right"></i>
+                      <span>Sign out</span>
+                    </button>
                   </form>
                 </li>
               </ul>

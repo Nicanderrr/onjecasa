@@ -42,6 +42,14 @@ class LoginController extends Controller
             return back()->withErrors(['email' => 'Invalid credentials'])->withInput();
         }
 
+        if (! $user->is_active) {
+            AuditTrail::record('login_blocked', 'Inactive account attempted to sign in', [
+                'properties' => ['email' => $data['email']],
+            ]);
+
+            return back()->withErrors(['email' => 'This account has been disabled by an administrator.'])->withInput();
+        }
+
         if ($user->role === 'admin') {
             $request->session()->put('pending_admin_user_id', $user->id);
             $request->session()->put('pending_admin_user_name', $user->name);

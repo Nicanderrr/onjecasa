@@ -2,13 +2,13 @@
 @section('content')
 <style>
   .order-grid { display:grid; grid-template-columns: 1.3fr .7fr; gap:16px; }
-  .panel { border:1px solid #deebe2; border-radius:14px; background:#fff; box-shadow:0 8px 20px rgba(15,23,42,.05); }
-  .panel-h { padding:12px 14px; border-bottom:1px solid #e8f1eb; font-weight:800; color:#0f172a; }
+  .panel { border:1px solid var(--admin-border); border-radius:14px; background:var(--admin-surface); box-shadow:0 8px 20px rgba(15,23,42,.05); }
+  .panel-h { padding:12px 14px; border-bottom:1px solid var(--admin-border); font-weight:800; color:var(--admin-text); }
   .panel-b { padding:14px; }
   .sticky-panel { position:sticky; top:18px; }
-  .order-table th { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#6b7280; }
-  .mini { font-size:12px; color:#6b7280; }
-  .sum-box { border:1px dashed #c9dfd0; border-radius:10px; padding:10px; background:#f7fbf8; }
+  .order-table th { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--admin-muted); }
+  .mini { font-size:12px; color:var(--admin-muted); }
+  .sum-box { border:1px dashed var(--admin-border); border-radius:10px; padding:10px; background:var(--admin-surface-soft); }
   @media (max-width: 992px) { .order-grid { grid-template-columns: 1fr; } .sticky-panel { position:static; } }
 </style>
 
@@ -165,7 +165,7 @@
             .box {
               padding: 18px 22px;
               border-radius: 14px;
-              background: #fff;
+              background: var(--admin-surface);
               border: 1px solid #d8e4db;
               box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
               font-weight: 700;

@@ -183,7 +183,11 @@
       padding: 2.4rem;
       display: flex;
       align-items: center;
-      background: #fff;
+      background: var(--admin-surface);
+    }
+
+    html[data-theme="dark"] .auth-content {
+      background: var(--admin-surface);
     }
 
     .auth-form-wrap {
@@ -313,6 +317,7 @@
   <div class="scanline"></div>
   <div class="radar"></div>
   <div id="particles"></div>
+  <x-shared.mouse-trail />
 
   <main class="login-container">
     <section class="glass shadow">

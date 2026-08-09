@@ -257,7 +257,7 @@
   .ai-composer-wrap {
     padding: .85rem 1rem .75rem;
     border-top: 1px solid var(--admin-border);
-    background: #fff;
+    background: var(--admin-surface);
   }
 
   .ai-composer {
@@ -268,7 +268,7 @@
     padding: .42rem .45rem .42rem .75rem;
     border: 1px solid #cbd5e1;
     border-radius: 14px;
-    background: #f8fafc;
+    background: var(--admin-surface-soft);
     transition: border-color .16s ease, box-shadow .16s ease;
   }
 
@@ -318,7 +318,7 @@
     display: flex;
     flex-direction: column;
     padding: 1rem;
-    background: linear-gradient(180deg, #fff, #f8fafc);
+    background: linear-gradient(180deg, var(--admin-surface), var(--admin-surface-soft));
   }
 
   .ai-prompt-header {
@@ -351,7 +351,7 @@
     border-radius: 12px;
     color: inherit;
     text-align: left;
-    background: #fff;
+    background: var(--admin-surface);
     transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
   }
 

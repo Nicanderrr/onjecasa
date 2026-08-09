@@ -10,13 +10,32 @@ class ReceiptController extends Controller
 {
     public function index(): View
     {
+        $summary = [
+            'receipt_count' => DB::table('pos_payments')->count(),
+            'total_value' => (float) DB::table('pos_payments')->sum('amount'),
+            'today_value' => (float) DB::table('pos_payments')->whereDate('created_at', now()->toDateString())->sum('amount'),
+            'latest_receipt_at' => DB::table('pos_payments')->max('created_at'),
+        ];
+
         $receipts = DB::table('pos_orders as o')
             ->join('pos_payments as p', 'p.order_id', '=', 'o.id')
-            ->select('o.id', 'o.code', 'o.customer_name', 'o.grand_total', 'o.created_at', 'p.method')
+            ->leftJoin('users as cashier', 'cashier.id', '=', 'o.cashier_user_id')
+            ->select(
+                'o.id',
+                'o.code',
+                'o.customer_name',
+                'o.grand_total',
+                'o.status',
+                'o.created_at',
+                'p.method',
+                'p.amount',
+                'p.paystack_reference',
+                'cashier.name as cashier_name'
+            )
             ->orderByDesc('o.id')
             ->paginate(20);
 
-        return view('admin.receipts.index', compact('receipts'));
+        return view('admin.receipts.index', compact('receipts', 'summary'));
     }
 
     public function show(int $id): View

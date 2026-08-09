@@ -1,38 +1,60 @@
 @extends('layouts.admin')
+
+@section('title', 'Orders - NewPOS')
+@section('page-eyebrow', 'Sales')
+@section('page-title', 'Orders')
+@section('page-description', 'Review customers, cashiers, payments, and order activity.')
+@section('page-actions')
+  <a href="{{ route('admin.orders.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-cart-plus"></i> New Order</a>
+@endsection
+
 @section('content')
-<div class="card shadow">
-  <div class="card-header border-0 d-flex justify-content-between align-items-center flex-wrap">
-    <h3 class="mb-0">Orders</h3>
-    <div class="d-flex" style="gap:8px;">
-      <input id="ordersFilter" class="form-control form-control-sm" style="min-width:220px;" placeholder="Filter by code/customer">
-      <a href="{{ route('admin.orders.create') }}" class="btn btn-sm btn-success"><i class="fas fa-cart-plus"></i> Make A New Order</a>
+<div class="card shadow entity-card orders-card">
+  <div class="card-header border-0 entity-toolbar orders-toolbar">
+    <div class="orders-table-heading">
+      <span class="orders-table-icon"><i class="bi bi-receipt-cutoff"></i></span>
+      <div><strong>Order register</strong><span>{{ $orders->total() }} {{ \Illuminate\Support\Str::plural('order', $orders->total()) }} recorded</span></div>
+    </div>
+    <div class="entity-filter-wrap">
+      <i class="bi bi-search"></i>
+      <input type="search" class="form-control form-control-sm entity-filter" placeholder="Search orders" aria-label="Filter orders" data-table-filter="#orders-table">
     </div>
   </div>
+
   <div class="table-responsive">
-    <table class="table align-items-center table-flush" id="ordersTable">
-      <thead class="thead-light"><tr><th>Code</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+    <table class="table align-items-center table-flush orders-table" id="orders-table">
+      <thead class="thead-light"><tr><th>Order</th><th>Customer</th><th>Cashier</th><th>Payment</th><th>Total</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
       <tbody>
-      @foreach($orders as $o)
-        <tr>
-          <td>{{ $o->code }}</td>
-          <td>{{ $o->customer_name }}</td>
-          <td>{{ number_format($o->grand_total,2) }}</td>
-          <td><span class="status-chip paid">{{ strtoupper($o->status) }}</span></td>
-          <td>{{ $o->created_at }}</td>
-          <td><a class="btn btn-sm btn-outline-primary" href="{{ route('admin.orders.show',$o->id) }}">View</a></td>
-        </tr>
-      @endforeach
+        @forelse($orders as $order)
+          @php
+            $statusKey = \Illuminate\Support\Str::slug($order->status ?: 'pending');
+            $paymentMethod = $order->payment_method ?: 'Not recorded';
+            $isMobileMoney = strcasecmp($paymentMethod, 'Mobile Money') === 0;
+            $customerName = $order->customer_name ?: 'Walk-in';
+            $customerInitial = \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($customerName, 0, 1));
+            $itemCount = (int) ($order->item_count ?? 0);
+          @endphp
+          <tr data-filter-row>
+            <td class="order-cell">
+              <div class="order-identity"><span class="order-symbol"><i class="bi bi-bag-check"></i></span><div><a href="{{ route('admin.orders.show', $order->id) }}">{{ $order->code }}</a><span>#{{ $order->id }} · {{ $itemCount }} {{ \Illuminate\Support\Str::plural('item', $itemCount) }}</span></div></div>
+            </td>
+            <td><div class="order-customer"><span class="customer-initial">{{ $customerInitial }}</span><strong>{{ $customerName }}</strong></div></td>
+            <td><span class="order-cashier"><i class="bi bi-person-badge"></i>{{ $order->cashier_name ?: 'Unknown' }}</span></td>
+            <td><span class="payment-method {{ $isMobileMoney ? 'mobile-money' : 'cash' }}"><i class="bi {{ $isMobileMoney ? 'bi-phone' : 'bi-cash' }}"></i>{{ $paymentMethod }}</span></td>
+            <td><span class="order-total">{{ number_format($order->grand_total, 2) }}</span></td>
+            <td><span class="order-status order-status-{{ $statusKey }}"><span></span>{{ ucfirst($order->status) }}</span></td>
+            <td><div class="order-date"><strong>{{ \Illuminate\Support\Carbon::parse($order->created_at)->format('d M Y') }}</strong><span>{{ \Illuminate\Support\Carbon::parse($order->created_at)->format('h:i A') }}</span></div></td>
+            <td><a class="btn btn-sm btn-outline-primary order-view-btn" href="{{ route('admin.orders.show', $order->id) }}"><i class="bi bi-eye"></i> View</a></td>
+          </tr>
+        @empty
+          <tr data-filter-empty><td colspan="8" class="text-center py-5 text-muted">No orders yet. Create the first order to begin the register.</td></tr>
+        @endforelse
+        @if($orders->count())
+          <tr data-filter-empty style="display:none;"><td colspan="8" class="text-center py-5 text-muted">No matching orders found.</td></tr>
+        @endif
       </tbody>
     </table>
   </div>
-  <div class="p-3">{{ $orders->links() }}</div>
+  @if($orders->hasPages())<div class="orders-pagination">{{ $orders->links() }}</div>@endif
 </div>
-<script>
-  document.getElementById('ordersFilter')?.addEventListener('input', function() {
-    const q = this.value.toLowerCase();
-    document.querySelectorAll('#ordersTable tbody tr').forEach((tr) => {
-      tr.style.display = tr.innerText.toLowerCase().includes(q) ? '' : 'none';
-    });
-  });
-</script>
 @endsection

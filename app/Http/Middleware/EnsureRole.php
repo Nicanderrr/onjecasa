@@ -12,7 +12,7 @@ class EnsureRole
     {
         $user = auth()->user();
 
-        if (! $user || $user->role !== $role) {
+        if (! $user || ! $user->is_active || $user->role !== $role) {
             abort(403);
         }
 
