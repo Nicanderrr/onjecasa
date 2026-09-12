@@ -36,13 +36,22 @@ Laravel-based POS system with staff OTP login, admin OTP, cashier shifts, produc
    ```bash
    php artisan migrate --force
    ```
-7. Cache production config and routes:
+7. Seed the default admin users and current products:
+   ```bash
+   php artisan db:seed --force
+   ```
+8. Cache production config and routes:
    ```bash
    php artisan config:cache
    php artisan route:cache
    php artisan view:cache
    ```
-8. Make sure `storage/` and `bootstrap/cache/` are writable by the web server.
-9. Configure SMTP before using OTP login in production. `MAIL_MAILER=log` only writes OTP emails to logs.
+9. Make sure `storage/` and `bootstrap/cache/` are writable by the web server.
+10. Configure SMTP before using OTP login in production. `MAIL_MAILER=log` only writes OTP emails to logs.
+
+Default seeded users:
+
+- `superadmin@mail.com` / `password`
+- `admin@mail.com` / `password`
 
 The root `.htaccess` rewrites requests into `public/`, so the Laravel app can run even when Hostinger points the domain at the project root.
