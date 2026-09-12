@@ -27,10 +27,11 @@ class ProductCrudController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:100'],
+            'code' => ['nullable', 'string', 'max:100', 'unique:pos_products,code'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
+            'low_stock_threshold' => ['nullable', 'integer', 'min:0'],
             'image' => ['nullable', 'image', 'max:2048'],
         ]);
 
@@ -41,11 +42,12 @@ class ProductCrudController extends Controller
         }
 
         $productId = DB::table('pos_products')->insertGetId([
-            'code' => $data['code'] ?: ('PRD-' . random_int(1000, 9999)),
+            'code' => $data['code'] ?: $this->generateProductCode(),
             'name' => $data['name'],
             'description' => $data['description'] ?? '',
             'price' => $data['price'],
             'stock' => $data['stock'],
+            'low_stock_threshold' => $data['low_stock_threshold'] ?? 5,
             'image' => $imageName,
             'created_at' => now(),
             'updated_at' => now(),
@@ -74,10 +76,11 @@ class ProductCrudController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:100'],
+            'code' => ['required', 'string', 'max:100', 'unique:pos_products,code,' . $id],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
+            'low_stock_threshold' => ['nullable', 'integer', 'min:0'],
             'image' => ['nullable', 'image', 'max:2048'],
         ]);
 
@@ -93,6 +96,7 @@ class ProductCrudController extends Controller
             'description' => $data['description'] ?? '',
             'price' => $data['price'],
             'stock' => $data['stock'],
+            'low_stock_threshold' => $data['low_stock_threshold'] ?? 5,
             'image' => $imageName,
             'updated_at' => now(),
         ]);
@@ -108,6 +112,7 @@ class ProductCrudController extends Controller
                     'description' => $data['description'] ?? '',
                     'price' => $data['price'],
                     'stock' => $data['stock'],
+                    'low_stock_threshold' => $data['low_stock_threshold'] ?? 5,
                     'image' => $imageName,
                 ],
             ],
@@ -127,5 +132,14 @@ class ProductCrudController extends Controller
         ]);
 
         return redirect()->route('admin.products.index')->with('success', 'Deleted');
+    }
+
+    private function generateProductCode(): string
+    {
+        do {
+            $code = 'PRD-' . random_int(1000, 9999);
+        } while (DB::table('pos_products')->where('code', $code)->exists());
+
+        return $code;
     }
 }

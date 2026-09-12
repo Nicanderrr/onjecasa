@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Login - NewPOS</title>
+  <title>Login - {{ $systemName }}</title>
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/css/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/vendors/bootstrap-icons/bootstrap-icons.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/css/style.css') }}">
@@ -104,12 +104,21 @@
       min-height: 100vh;
       padding: 2.5rem;
       color: #fff;
-      background: url('{{ $splashImage }}') center/cover no-repeat;
+      background: url('{{ $splashMedia['url'] }}') center/cover no-repeat;
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+    }
+
+    .auth-media-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
     }
 
     .auth-hue-overlay {
@@ -119,7 +128,7 @@
       pointer-events: none;
     }
 
-    .auth-splash > :not(.auth-hue-overlay) {
+    .auth-splash > :not(.auth-media-video):not(.auth-hue-overlay) {
       position: relative;
       z-index: 2;
     }
@@ -323,13 +332,16 @@
     <section class="glass shadow">
       <div class="auth-layout">
         <aside class="auth-splash">
+          @if(!empty($splashMedia['isVideo']))
+            <video class="auth-media-video" src="{{ $splashMedia['url'] }}" autoplay muted loop playsinline></video>
+          @endif
           <div class="auth-hue-overlay" style="{{ $overlayStyle ?? 'background: linear-gradient(160deg, rgba(185, 28, 28, 0.72), rgba(2, 6, 23, 0.55));' }}"></div>
           <div>
             <div class="auth-badge mb-4"><i class="bi bi-grid-1x2-fill"></i></div>
             <div class="auth-brand">
-              <img src="{{ $brandLogo }}" alt="NewPOS">
+              <img src="{{ $brandLogo }}" alt="{{ $systemName }}">
             </div>
-            <h1 class="auth-title-large">New<span>POS</span></h1>
+            <h1 class="auth-title-large">{{ $systemName }}</h1>
             <p class="auth-subtitle-large">Command Center</p>
             <p class="auth-brand-copy mb-0">
               A cleaner admin workspace for orders, products, payments, and the built-in AI assistant.
@@ -339,11 +351,11 @@
         </aside>
 
         <div class="auth-content">
-          <form id="loginForm" class="auth-form-wrap" method="POST" action="{{ route('login.submit') }}">
+          <form id="loginForm" class="auth-form-wrap" method="POST" action="{{ route('admin.login.submit') }}">
             @csrf
             <div class="auth-kicker"><i class="bi bi-shield-lock"></i> Secure Login</div>
-            <h2 class="auth-title">Sign in to NewPOS</h2>
-            <p class="auth-copy">Use your account email and password. Admin users will continue to PIN verification.</p>
+            <h2 class="auth-title">Sign in to {{ $systemName }}</h2>
+            <p class="auth-copy">Use your account email and password. Admin users will continue to email OTP verification.</p>
 
             @if($errors->any())
               <div class="alert alert-danger">{{ $errors->first() }}</div>
@@ -361,7 +373,7 @@
               <label class="auth-label" for="passwordField">Password</label>
               <div class="input-group input-group-alternative">
                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                <input id="passwordField" class="form-control" type="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+                <input id="passwordField" class="form-control" type="password" name="password" placeholder="••••••••" autocomplete="current-password">
                 <button type="button" id="togglePassword" class="btn btn-link px-2 text-decoration-none" aria-label="Toggle password visibility">
                   <i id="eyeIconSVG" class="bi bi-eye"></i>
                   <i id="eyeOffIconSVG" class="bi bi-eye-slash d-none"></i>
@@ -383,7 +395,7 @@
             <button id="loginBtn" class="btn btn-primary btn-login" type="submit">Login</button>
 
             <div class="auth-footer">
-              Admin PIN screen follows after login.
+              Admin OTP screen follows after login.
             </div>
           </form>
         </div>

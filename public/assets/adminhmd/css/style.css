@@ -3577,6 +3577,99 @@ html[data-theme="dark"] .text-bg-secondary {
   .page-heading-copy {
     align-items: flex-start;
   }
+
+  .admin-navbar {
+    min-height: 62px;
+  }
+
+  .admin-navbar .container-fluid {
+    gap: 0.65rem;
+    padding-inline: 0.85rem !important;
+  }
+
+  .dashboard-content > .container-fluid {
+    padding-inline: 0.85rem !important;
+  }
+
+  .page-heading,
+  .panel-header,
+  .entity-toolbar,
+  .card-header {
+    gap: 0.85rem;
+  }
+
+  .heading-actions,
+  .entity-filter-wrap,
+  .action-group,
+  .settings-actions,
+  .receipt-actions,
+  .super-actions,
+  .product-actions,
+  .cashier-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .heading-actions .btn,
+  .entity-filter-wrap .btn,
+  .action-group .btn,
+  .settings-actions .btn,
+  .receipt-actions .btn,
+  .super-actions .btn,
+  .product-actions .btn,
+  .cashier-actions .btn {
+    flex: 1 1 9rem;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  .entity-filter-wrap,
+  .entity-toolbar form,
+  .panel-header form {
+    min-width: 0;
+  }
+
+  .entity-filter,
+  .table-search,
+  .topbar-search,
+  .panel-header .form-control,
+  .panel-header .form-select {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .table-responsive {
+    border-radius: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-responsive > .table {
+    min-width: 680px;
+  }
+
+  .table th,
+  .table td {
+    white-space: nowrap;
+  }
+
+  .table td {
+    vertical-align: middle;
+  }
+
+  .modal-dialog {
+    margin: 0.75rem;
+  }
+
+  .modal-content {
+    border-radius: 8px;
+  }
+
+  .dropdown-menu {
+    max-width: calc(100vw - 1rem);
+  }
 }
 
 @media (max-width: 575.98px) {
@@ -3592,6 +3685,104 @@ html[data-theme="dark"] .text-bg-secondary {
   .panel-header .d-flex,
   .panel-header .form-control,
   .panel-header .form-select {
+    width: 100%;
+  }
+
+  body {
+    background: linear-gradient(180deg, #f8fbff 0%, var(--admin-bg) 100%);
+  }
+
+  .admin-sidebar {
+    width: min(18rem, calc(100vw - 20px)) !important;
+  }
+
+  .dashboard-content > .container-fluid {
+    padding: 0.75rem !important;
+  }
+
+  .page-heading {
+    padding: 0.85rem;
+    border-radius: 8px;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    box-shadow: var(--admin-shadow-sm);
+  }
+
+  .page-heading h1,
+  .page-heading .h3 {
+    font-size: 1.08rem;
+    line-height: 1.25;
+  }
+
+  .page-heading .text-muted {
+    font-size: 0.8rem;
+  }
+
+  .page-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+  }
+
+  .metric-card,
+  .panel,
+  .card,
+  .entity-card,
+  .super-card {
+    border-radius: 8px !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  }
+
+  .card-body,
+  .card-header,
+  .card-footer {
+    padding: 0.9rem;
+  }
+
+  .metric-card {
+    min-height: 0;
+    padding: 0.95rem;
+  }
+
+  .metric-label,
+  .metric-meta,
+  .form-hint,
+  .form-text,
+  small {
+    overflow-wrap: anywhere;
+  }
+
+  .metric-value {
+    font-size: 1.45rem;
+    line-height: 1.15;
+  }
+
+  .btn,
+  .form-control,
+  .form-select {
+    min-height: 42px;
+  }
+
+  .btn {
+    padding-inline: 0.8rem;
+  }
+
+  .btn-sm {
+    min-height: 38px;
+  }
+
+  .row {
+    --bs-gutter-x: 0.75rem;
+    --bs-gutter-y: 0.75rem;
+  }
+
+  .toast-stack {
+    inset-inline: 0.75rem;
+    right: 0.75rem;
+    left: 0.75rem;
+  }
+
+  .toast-note {
     width: 100%;
   }
 }

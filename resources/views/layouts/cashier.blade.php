@@ -1,9 +1,17 @@
 <!doctype html>
 <html lang="en" data-theme="light">
+@php
+  $layoutLogoSetting = \Illuminate\Support\Facades\DB::table('pos_settings')->where('key', 'sidebar_logo')->value('value');
+  $layoutLogoUrl = $layoutLogoSetting
+    ? asset('assets/admin/img/settings/' . $layoutLogoSetting)
+    : asset('assets/adminhmd/images/brand/logo/logo-icon.svg');
+@endphp
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>@yield('title', 'Cashier - NewPOS')</title>
+  <link rel="icon" href="{{ $layoutLogoUrl }}">
+  <link rel="apple-touch-icon" href="{{ $layoutLogoUrl }}">
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/css/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/vendors/bootstrap-icons/bootstrap-icons.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/css/style.css') }}">
@@ -12,7 +20,7 @@
     .page-heading .h3, .page-heading h1 { margin: 0; }
     .cashier-badge { display:inline-flex; align-items:center; gap:.5rem; }
     .sidebar-user .avatar-img { object-fit: cover; }
-    .brand-icon img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: 1.1rem; }
+    .brand-icon img { width: 100%; height: 100%; display: block; object-fit: contain; border-radius: .95rem; background: #fff; }
 
     .admin-sidebar {
       background:
@@ -43,9 +51,10 @@
       display: inline-grid;
       place-items: center;
       overflow: hidden;
-      padding: .55rem;
+      padding: .45rem;
       border-radius: 1.3rem;
-      background: var(--admin-surface);
+      background: #fff;
+      border: 1px solid rgba(255,255,255,.12);
       box-shadow: 0 20px 40px -28px rgba(15, 23, 42, 0.75);
     }
 
@@ -99,6 +108,33 @@
       display:flex; align-items:center; gap:.65rem; margin-top:auto; margin-inline:1rem; padding:1rem 0;
       border-top:1px solid rgba(255,255,255,.08); color:#cbd5e1; font-size:.9rem; white-space:nowrap;
     }
+    .cashier-floating-sale {
+      position: fixed;
+      right: 1.35rem;
+      bottom: 1.35rem;
+      z-index: 1040;
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      min-height: 3.25rem;
+      padding: .85rem 1.1rem;
+      border-radius: 999px;
+      color: #fff;
+      background: linear-gradient(135deg, #0f766e, #16a34a);
+      border: 1px solid rgba(255, 255, 255, .16);
+      box-shadow: 0 18px 38px rgba(15, 118, 110, .34);
+      font-weight: 900;
+      text-decoration: none;
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+    .cashier-floating-sale:hover,
+    .cashier-floating-sale:focus {
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 22px 48px rgba(15, 118, 110, .42);
+      background: linear-gradient(135deg, #115e59, #15803d);
+    }
+    .cashier-floating-sale i { font-size: 1.15rem; }
     .admin-main { margin-left: 18rem; min-height: 100vh; width: calc(100% - 18rem); }
     .page-heading .page-icon, .page-heading .section-title i { background:#dcfce7; color:#166534; }
     @media (min-width: 1024px) {
@@ -114,17 +150,27 @@
     }
     @media (max-width: 575.98px) {
       .admin-nav-group-summary, .admin-nav-link, .sidebar-user, .brand-mark { border-radius:.9rem; }
-      .brand-icon { width:4.9rem; height:4.9rem; }
+      .brand-icon { width:4.9rem; height:4.9rem; border-radius:1rem; }
+      .cashier-floating-sale {
+        right: 1rem;
+        bottom: 1rem;
+        width: 3.35rem;
+        height: 3.35rem;
+        justify-content: center;
+        padding: 0;
+      }
+      .cashier-floating-sale span { display: none; }
     }
   </style>
   @stack('styles')
 </head>
 @php
-  $user = auth()->user();
+  $user = auth()->user()?->fresh();
   $userName = $user?->name ?? 'Cashier';
   $userEmail = $user?->email ?? 'cashier@example.com';
-  $userAvatar = asset('assets/adminhmd/images/avatar/avatar.jpg');
+  $userAvatar = $user?->avatarUrl();
   $systemName = \Illuminate\Support\Facades\DB::table('pos_settings')->where('key', 'system_name')->value('value') ?? 'NewPOS';
+  $sidebarLogoUrl = $layoutLogoUrl;
   $cashierPageIs = function (string $page): bool {
       return request()->routeIs('cashier.pages.show') && request()->route('page') === $page;
   };
@@ -228,7 +274,7 @@
       <div class="sidebar-header">
         <a class="brand-mark" href="{{ route('cashier.pages.show', 'dashboard') }}" aria-label="{{ $systemName }} cashier dashboard">
           <span class="brand-icon">
-            <img src="{{ asset('assets/adminhmd/images/brand/logo/logo-icon.svg') }}" alt="{{ $systemName }}">
+            <img src="{{ $sidebarLogoUrl }}" alt="{{ $systemName }}">
           </span>
           <span class="brand-copy">
             <span class="brand-title">{{ $systemName }}</span>
@@ -345,6 +391,13 @@
     </div>
   </div>
 
+  @unless(request()->routeIs('cashier.sales.create'))
+    <a class="cashier-floating-sale" href="{{ route('cashier.sales.create') }}" aria-label="Make sale" title="Make sale">
+      <i class="bi bi-cart-plus" aria-hidden="true"></i>
+      <span>Make Sale</span>
+    </a>
+  @endunless
+
   <div class="toast-stack">
     @if(session('success'))
       <div class="toast-note success">{{ session('success') }}</div>
@@ -353,6 +406,8 @@
       <div class="toast-note error">{{ $errors->first() }}</div>
     @endif
   </div>
+
+  @include('components.admin-ai-assistant')
 
   <script>
     window.adminHMDUser = {

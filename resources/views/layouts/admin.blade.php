@@ -1,9 +1,17 @@
 <!doctype html>
 <html lang="en" data-theme="light">
+@php
+  $layoutLogoSetting = \Illuminate\Support\Facades\DB::table('pos_settings')->where('key', 'sidebar_logo')->value('value');
+  $layoutLogoUrl = $layoutLogoSetting
+    ? asset('assets/admin/img/settings/' . $layoutLogoSetting)
+    : asset('assets/adminhmd/images/brand/logo/logo-icon.svg');
+@endphp
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>@yield('title', 'Admin - NewPOS')</title>
+  <link rel="icon" href="{{ $layoutLogoUrl }}">
+  <link rel="apple-touch-icon" href="{{ $layoutLogoUrl }}">
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/css/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/vendors/bootstrap-icons/bootstrap-icons.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/css/style.css') }}">
@@ -27,7 +35,16 @@
     .profile-button .avatar-img { border-radius: 50%; }
     .dashboard-content { padding-bottom: 2rem; }
     .sidebar-user .avatar-img { object-fit: cover; }
-    .brand-icon img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: 50%; }
+    .sidebar-user-avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 40px -28px rgba(15, 23, 42, 0.75);
+    }
+    .brand-icon img { width: 100%; height: 100%; display: block; object-fit: contain; border-radius: 1rem; background: #fff; }
 
     .admin-sidebar {
       background:
@@ -67,10 +84,10 @@
       display: inline-grid;
       place-items: center;
       overflow: hidden;
-      padding: 0;
-      border: 3px solid rgba(147, 197, 253, 0.42);
-      border-radius: 50%;
-      background: transparent;
+      padding: .45rem;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 1.2rem;
+      background: #fff;
       box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.09), 0 20px 40px -28px rgba(15, 23, 42, 0.75);
     }
 
@@ -307,6 +324,8 @@
     body.sidebar-mini .brand-icon {
       width: 3.9rem;
       height: 3.9rem;
+      padding: .25rem;
+      border-radius: .9rem;
     }
 
     body.sidebar-mini .brand-copy,
@@ -355,6 +374,112 @@
       color: #1d4ed8;
     }
 
+    .admin-tour-launcher {
+      align-items: center;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #2563eb, #0f766e);
+      color: #fff;
+      display: inline-flex;
+      font-size: .82rem;
+      font-weight: 800;
+      gap: .45rem;
+      justify-content: center;
+      padding: .68rem 1rem;
+      box-shadow: 0 12px 24px rgba(37, 99, 235, .22);
+    }
+
+    .admin-tour-launcher:hover {
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .admin-tour-highlight {
+      border: 3px solid #f59e0b;
+      border-radius: 1rem;
+      box-shadow: 0 0 0 9999px rgba(15, 23, 42, .62), 0 22px 70px rgba(15, 23, 42, .26);
+      display: none;
+      pointer-events: none;
+      position: fixed;
+      transition: all .2s ease;
+      z-index: 10050;
+    }
+
+    .admin-tour-highlight.is-active {
+      display: block;
+    }
+
+    .admin-tour-card {
+      background: var(--admin-surface, #fff);
+      border: 1px solid #dbe4ef;
+      border-radius: 8px;
+      box-shadow: 0 28px 80px rgba(15, 23, 42, .28);
+      color: var(--admin-text, #0f172a);
+      display: none;
+      max-width: min(390px, calc(100vw - 28px));
+      padding: 1.25rem;
+      position: fixed;
+      width: 390px;
+      z-index: 10060;
+    }
+
+    .admin-tour-card.is-active {
+      display: block;
+    }
+
+    .admin-tour-kicker {
+      color: #2563eb;
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .admin-tour-card h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      line-height: 1.15;
+      margin: .55rem 0 .45rem;
+    }
+
+    .admin-tour-card p {
+      color: var(--admin-muted, #64748b);
+      font-size: .9rem;
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .admin-tour-actions {
+      align-items: center;
+      display: flex;
+      gap: .75rem;
+      justify-content: space-between;
+      margin-top: 1.1rem;
+    }
+
+    .admin-tour-skip {
+      background: transparent;
+      border: 0;
+      color: var(--admin-muted, #64748b);
+      font-size: .8rem;
+      font-weight: 800;
+      padding: 0;
+    }
+
+    .admin-tour-next {
+      align-items: center;
+      background: linear-gradient(135deg, #2563eb, #0f766e);
+      border: 0;
+      border-radius: 999px;
+      color: #fff;
+      display: inline-flex;
+      font-size: .8rem;
+      font-weight: 800;
+      gap: .45rem;
+      justify-content: center;
+      padding: .7rem 1rem;
+    }
+
     @media (min-width: 1024px) {
       .admin-sidebar {
         width: 18rem;
@@ -390,6 +515,16 @@
       body.sidebar-open .sidebar-backdrop {
         display: block;
       }
+
+      .admin-tour-card {
+        bottom: 1rem !important;
+        left: .85rem !important;
+        max-height: 48vh;
+        overflow-y: auto;
+        right: .85rem !important;
+        top: auto !important;
+        width: auto;
+      }
     }
 
     @media (max-width: 575.98px) {
@@ -403,21 +538,28 @@
       .brand-icon {
         width: 4.9rem;
         height: 4.9rem;
+        border-radius: 1rem;
+      }
+
+      .admin-tour-card h3 {
+        font-size: 1.08rem;
+      }
+
+      .admin-tour-card p {
+        font-size: .82rem;
+        line-height: 1.45;
       }
     }
   </style>
   @stack('styles')
 </head>
 @php
-  $user = auth()->user();
+  $user = auth()->user()?->fresh();
   $userName = $user?->name ?? 'Admin';
   $userEmail = $user?->email ?? 'admin@example.com';
-  $userAvatar = asset('assets/adminhmd/images/avatar/avatar.jpg');
+  $userAvatar = $user?->avatarUrl();
   $systemName = \Illuminate\Support\Facades\DB::table('pos_settings')->where('key', 'system_name')->value('value') ?? 'NewPOS';
-  $sidebarLogo = \Illuminate\Support\Facades\DB::table('pos_settings')->where('key', 'sidebar_logo')->value('value');
-  $sidebarLogoUrl = $sidebarLogo
-    ? asset('assets/admin/img/settings/' . $sidebarLogo)
-    : asset('assets/adminhmd/images/brand/logo/logo-icon.svg');
+  $sidebarLogoUrl = $layoutLogoUrl;
 
   $navLinkClass = function (string $pattern): string {
       return 'admin-nav-link'.(request()->routeIs($pattern) ? ' admin-nav-link-active' : '');
@@ -496,6 +638,11 @@
                   'route' => route('admin.receipts.index'),
                   'pattern' => 'admin.receipts.*',
               ],
+              [
+                  'label' => 'Shifts',
+                  'route' => route('admin.shifts.index'),
+                  'pattern' => 'admin.shifts.*',
+              ],
           ],
       ],
       [
@@ -544,7 +691,7 @@
 
     <aside class="admin-sidebar" id="adminSidebar" aria-label="Main navigation">
       <div class="sidebar-header">
-        <a class="brand-mark" href="{{ route('admin.dashboard') }}" aria-label="{{ $systemName }} dashboard">
+        <a class="brand-mark" href="{{ route('admin.dashboard') }}" aria-label="{{ $systemName }} dashboard" data-admin-tour-target="brand">
           <span class="brand-icon">
             <img src="{{ $sidebarLogoUrl }}" alt="{{ $systemName }}">
           </span>
@@ -561,7 +708,7 @@
       <nav class="sidebar-nav">
         @foreach ($navGroups as $group)
           @continue(empty($group['links']))
-          <details class="admin-nav-group" @if ($navGroupIsActive($group)) open @endif>
+          <details class="admin-nav-group" @if ($navGroupIsActive($group)) open @endif data-admin-tour-target="{{ \Illuminate\Support\Str::slug($group['label']) }}">
             <summary class="admin-nav-group-summary">
               <div class="admin-nav-group-meta">
                 <span class="admin-nav-group-symbol" aria-hidden="true">
@@ -623,6 +770,12 @@
         @endforeach
       </nav>
 
+      <div class="sidebar-user">
+        <img class="avatar-img avatar-md sidebar-user-avatar" src="{{ $userAvatar }}" alt="{{ $userName }}">
+        <strong>{{ $userName }}</strong>
+        <small>{{ $userEmail }}</small>
+      </div>
+
     </aside>
 
     <div class="admin-main">
@@ -634,16 +787,21 @@
             <span></span>
           </button>
 
-          <form class="d-none d-md-flex ms-3 flex-grow-1" role="search">
+          <form class="d-none d-md-flex ms-3 flex-grow-1" role="search" data-admin-tour-target="search">
             <input class="form-control search-input" type="search" placeholder="Search products, orders, reports" aria-label="Search">
           </form>
 
           <div class="navbar-actions ms-auto">
-            <button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme" title="Switch color theme">
+            <button class="admin-tour-launcher" id="adminTourLauncher" type="button">
+              <i class="bi bi-compass"></i>
+              <span>Guide</span>
+            </button>
+
+            <button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme" title="Switch color theme" data-admin-tour-target="theme">
               <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
             </button>
 
-            <div class="dropdown">
+            <div class="dropdown" data-admin-tour-target="profile">
               <button class="profile-button dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <img class="avatar-img avatar-sm" src="{{ $userAvatar }}" alt="{{ $userName }}">
                 <span class="profile-name d-none d-sm-inline">{{ $userName }}</span>
@@ -676,7 +834,7 @@
 
       <main class="dashboard-content">
         <div class="container-fluid px-3 px-lg-4 py-4">
-          <div class="page-heading">
+          <div class="page-heading" data-admin-tour-target="page-heading">
             <div class="page-heading-copy">
               <span class="page-icon"><i class="@yield('page-icon', 'bi bi-speedometer2')" aria-hidden="true"></i></span>
               <div>
@@ -703,6 +861,17 @@
 
   @include('components.admin-ai-assistant')
 
+  <div class="admin-tour-highlight" id="adminTourHighlight" aria-hidden="true"></div>
+  <div class="admin-tour-card" id="adminTourCard" role="dialog" aria-modal="false" aria-labelledby="adminTourTitle">
+    <span class="admin-tour-kicker" id="adminTourCount">Guide</span>
+    <h3 id="adminTourTitle">Welcome to NewPOS admin</h3>
+    <p id="adminTourText">A quick guide will show the main areas used to manage products, orders, staff, payments, and reports.</p>
+    <div class="admin-tour-actions">
+      <button type="button" class="admin-tour-skip" id="adminTourSkip">Skip</button>
+      <button type="button" class="admin-tour-next" id="adminTourNext">Start</button>
+    </div>
+  </div>
+
   <div class="toast-stack">
     @if(session('success'))
       <div class="toast-note success">{{ session('success') }}</div>
@@ -721,6 +890,123 @@
   <script src="{{ asset('assets/adminhmd/js/bootstrap.bundle.min.js') }}"></script>
   <script src="{{ asset('assets/adminhmd/js/main.js') }}"></script>
   <script src="{{ asset('assets/admin/vendor/@fortawesome/fontawesome-free/js/all.min.js') }}"></script>
+  <script>
+    (() => {
+      const storageKey = 'newpos_admin_tour_seen_v1';
+      const card = document.getElementById('adminTourCard');
+      const highlight = document.getElementById('adminTourHighlight');
+      const title = document.getElementById('adminTourTitle');
+      const text = document.getElementById('adminTourText');
+      const count = document.getElementById('adminTourCount');
+      const next = document.getElementById('adminTourNext');
+      const skip = document.getElementById('adminTourSkip');
+      const launcher = document.getElementById('adminTourLauncher');
+      let current = 0;
+
+      if (!card || !highlight || !title || !text || !count || !next || !skip || !launcher) return;
+
+      const steps = [
+        { target: '[data-admin-tour-target="brand"]', title: 'Admin command center', text: 'Use this panel to manage inventory, cashier accounts, paid orders, payments, receipts, reports, and POS settings.' },
+        { target: '[data-admin-tour-target="overview"]', title: 'Overview', text: 'Start at the dashboard for sales totals, order activity, product counts, cashier activity, and fast links into daily work.' },
+        { target: '[data-admin-tour-target="inventory"]', title: 'Inventory', text: 'Create products, import product lists, update categories, adjust stock, and keep sale prices current.' },
+        { target: '[data-admin-tour-target="users"]', title: 'Cashier users', text: 'Manage cashier staff records and cashier access for the people who process sales.' },
+        { target: '[data-admin-tour-target="operations"]', title: 'Operations', text: 'Review orders, payments, and receipts. Admins can also create paid orders and print customer receipts.' },
+        { target: '[data-admin-tour-target="reports"]', title: 'Reports and audit', text: 'Use reports to review order/payment history, sales totals, and audit trail activity.' },
+        { target: '[data-admin-tour-target="system"]', title: 'System settings', text: 'Update the admin profile, PIN, login appearance, dark mode, system name, sidebar logo, and other interface defaults.' },
+        { target: '[data-admin-tour-target="search"]', title: 'Quick search', text: 'Use the top search box to quickly look for products, orders, and report content from admin pages that support filtering.' },
+        { target: '[data-admin-tour-target="theme"]', title: 'Display mode', text: 'Switch between light and dark mode from this button.' },
+        { target: '[data-admin-tour-target="profile"]', title: 'Profile menu', text: 'Open your profile menu to confirm the signed-in admin account or sign out.' },
+        { target: '#ai-assistant-toggle', title: 'NewPOS AI assistant', text: 'Use the AI assistant for questions about stock, orders, payments, sales trends, staff, reports, and next operational actions.' },
+      ].filter((step) => document.querySelector(step.target));
+
+      function isVisibleTarget(element) {
+        if (!element) return false;
+        const rect = element.getBoundingClientRect();
+        const styles = window.getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0 && styles.display !== 'none' && styles.visibility !== 'hidden';
+      }
+
+      function placeTour(target) {
+        if (!isVisibleTarget(target)) {
+          highlight.classList.remove('is-active');
+          return;
+        }
+
+        const rect = target.getBoundingClientRect();
+        const padding = 8;
+        highlight.style.left = `${Math.max(8, rect.left - padding)}px`;
+        highlight.style.top = `${Math.max(8, rect.top - padding)}px`;
+        highlight.style.width = `${Math.min(window.innerWidth - 16, rect.width + padding * 2)}px`;
+        highlight.style.height = `${rect.height + padding * 2}px`;
+        highlight.classList.add('is-active');
+
+        if (window.matchMedia('(max-width: 1024px)').matches) {
+          card.style.left = '';
+          card.style.top = '';
+          return;
+        }
+
+        const cardWidth = Math.min(390, window.innerWidth - 28);
+        let left = rect.right + 18;
+        let top = rect.top;
+
+        if (left + cardWidth > window.innerWidth - 14) left = Math.max(14, rect.left - cardWidth - 18);
+        if (top + 245 > window.innerHeight) top = Math.max(14, window.innerHeight - 260);
+
+        card.style.left = `${left}px`;
+        card.style.top = `${top}px`;
+      }
+
+      function renderStep() {
+        if (!steps.length) return closeTour(false);
+
+        const step = steps[current];
+        const target = document.querySelector(step.target);
+        if (!target) return closeTour(false);
+
+        title.textContent = step.title;
+        text.textContent = step.text;
+        count.textContent = `${current + 1} of ${steps.length}`;
+        next.textContent = current === steps.length - 1 ? 'Finish' : 'Next';
+        card.classList.add('is-active');
+
+        if (isVisibleTarget(target)) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        }
+
+        window.setTimeout(() => placeTour(target), 260);
+      }
+
+      function openTour(force = false) {
+        if (!force && localStorage.getItem(storageKey)) return;
+        current = 0;
+        renderStep();
+      }
+
+      function closeTour(markSeen = true) {
+        card.classList.remove('is-active');
+        highlight.classList.remove('is-active');
+        if (markSeen) localStorage.setItem(storageKey, '1');
+      }
+
+      next.addEventListener('click', () => {
+        if (current >= steps.length - 1) {
+          closeTour(true);
+          return;
+        }
+
+        current += 1;
+        renderStep();
+      });
+
+      skip.addEventListener('click', () => closeTour(true));
+      launcher.addEventListener('click', () => openTour(true));
+      window.addEventListener('resize', () => {
+        if (card.classList.contains('is-active')) renderStep();
+      });
+      window.setTimeout(() => openTour(false), 900);
+    })();
+  </script>
   <script>
     document.addEventListener('input', (event) => {
       const input = event.target;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Admin PIN - NewPOS</title>
+  <title>Admin OTP - {{ $systemName }}</title>
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/css/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/vendors/bootstrap-icons/bootstrap-icons.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/adminhmd/css/style.css') }}">
@@ -104,12 +104,21 @@
       min-height: 100vh;
       padding: 2.4rem;
       color: #fff;
-      background: url('{{ $splashImage }}') center/cover no-repeat;
+      background: url('{{ $splashMedia['url'] }}') center/cover no-repeat;
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+    }
+
+    .auth-media-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
     }
 
     .auth-hue-overlay {
@@ -119,7 +128,7 @@
       pointer-events: none;
     }
 
-    .pin-splash > :not(.auth-hue-overlay) {
+    .pin-splash > :not(.auth-media-video):not(.auth-hue-overlay) {
       position: relative;
       z-index: 2;
     }
@@ -245,7 +254,7 @@
       color: var(--admin-primary);
     }
 
-    .btn-pin {
+    .btn-otp {
       width: 100%;
       border-radius: 8px;
       min-height: 46px;
@@ -254,11 +263,29 @@
       border-color: #0f766e;
     }
 
-    .btn-pin:hover,
-    .btn-pin:focus {
+    .btn-otp:hover,
+    .btn-otp:focus {
       background: linear-gradient(to right, #065f46, #0f766e);
       border-color: #065f46;
       box-shadow: 0 0 25px rgba(15, 118, 129, 0.4);
+    }
+
+    .otp-test-code {
+      margin-bottom: 1rem;
+      border: 1px dashed #10b981;
+      border-radius: 8px;
+      background: #ecfdf5;
+      color: #065f46;
+      padding: 0.85rem 1rem;
+      font-size: 0.85rem;
+      line-height: 1.45;
+    }
+
+    .otp-test-code strong {
+      display: block;
+      font-size: 1.35rem;
+      letter-spacing: 0.2em;
+      margin-top: 0.2rem;
     }
 
     .pin-greeting {
@@ -308,43 +335,58 @@
     <section class="glass shadow">
       <div class="auth-layout">
         <aside class="pin-splash">
+          @if(!empty($splashMedia['isVideo']))
+            <video class="auth-media-video" src="{{ $splashMedia['url'] }}" autoplay muted loop playsinline></video>
+          @endif
           <div class="auth-hue-overlay" style="{{ $overlayStyle ?? 'background: linear-gradient(160deg, rgba(16, 185, 129, 0.72), rgba(2, 6, 23, 0.55));' }}"></div>
           <div>
             <div class="auth-badge mb-4"><i class="bi bi-lock-fill"></i></div>
             <div class="auth-brand">
-              <img src="{{ $brandLogo }}" alt="NewPOS">
+              <img src="{{ $brandLogo }}" alt="{{ $systemName }}">
             </div>
-            <h1 class="auth-title-large">Admin <span>PIN</span></h1>
+            <h1 class="auth-title-large">Admin <span>OTP</span></h1>
             <p class="auth-subtitle-large">Verification Layer</p>
             <p class="mb-0" style="max-width: 28rem; font-size: 1.1rem; line-height: 1.6;">
-              {{ $adminName }}, enter your security PIN to complete access to the admin workspace.
+              {{ $adminName }}, enter the email code to complete access to the admin workspace.
             </p>
           </div>
-          <div class="small text-white-50">Extra verification is required for admin accounts.</div>
+          <div class="small text-white-50">A one-time code is required for admin accounts.</div>
         </aside>
 
         <div class="auth-content">
-          <form id="pinForm" class="pin-form-wrap" method="POST" action="{{ route('admin.pincode.verify') }}">
+          <form id="otpForm" class="pin-form-wrap" method="POST" action="{{ route('admin.otp.verify') }}">
             @csrf
             <div class="pin-kicker"><i class="bi bi-shield-check"></i> Verification</div>
-            <h2 class="pin-title">Enter your PIN</h2>
-            <p class="pin-copy">This confirms you are the authenticated admin user.</p>
+            <h2 class="pin-title">Enter your OTP</h2>
+            <p class="pin-copy">We sent a 6-digit code to {{ $adminEmail }}.</p>
 
             @if($errors->any())
               <div class="alert alert-danger">{{ $errors->first() }}</div>
             @endif
 
+            @if(!empty($otpMailNotice))
+              <div class="alert alert-warning">{{ $otpMailNotice }}</div>
+            @endif
+
+            @if(!empty($testOtp))
+              <div class="otp-test-code">
+                Testing code shown on page
+                <strong>{{ $testOtp }}</strong>
+                <span>Expires at {{ $otpExpiresAt }}.</span>
+              </div>
+            @endif
+
             <div class="mb-3">
-              <label class="auth-label" for="pincode">Security PIN</label>
+              <label class="auth-label" for="admin_otp">Email OTP</label>
               <div class="input-group input-group-alternative">
-                <span class="input-group-text"><i class="bi bi-key"></i></span>
-                <input id="pincode" class="form-control" type="password" name="admin_pincode" maxlength="10" placeholder="Enter PIN" required autofocus>
+                <span class="input-group-text"><i class="bi bi-envelope-check"></i></span>
+                <input id="admin_otp" class="form-control" type="text" name="admin_otp" maxlength="6" minlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter OTP" required autofocus>
               </div>
             </div>
 
-            <button class="btn btn-primary btn-pin" type="submit">Enter Dashboard</button>
+            <button class="btn btn-primary btn-otp" type="submit">Enter Dashboard</button>
             <div class="pin-greeting">Hello, <strong>{{ $adminName }}</strong>.</div>
-            <div class="auth-footer">Admin PIN screen follows after login.</div>
+            <div class="auth-footer">Admin OTP screen follows after login.</div>
           </form>
         </div>
       </div>
@@ -359,9 +401,9 @@
     }, 1200);
 
     document.addEventListener('DOMContentLoaded', function () {
-      const pincode = document.getElementById('pincode');
-      if (pincode) {
-        pincode.focus();
+      const otp = document.getElementById('admin_otp');
+      if (otp) {
+        otp.focus();
       }
 
       const particlesContainer = document.getElementById('particles');

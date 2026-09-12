@@ -14,6 +14,7 @@
   $latestReceiptAt = $summary['latest_receipt_at']
     ? \Illuminate\Support\Carbon::parse($summary['latest_receipt_at'])
     : null;
+  $filters = $filters ?? ['search' => '', 'method' => '', 'date_from' => '', 'date_to' => ''];
 @endphp
 
 <section class="row g-2 dashboard-metrics entity-metrics receipts-metrics" aria-label="Receipts summary">
@@ -61,11 +62,40 @@
         </span>
       </div>
     </div>
-    <div class="entity-filter-wrap">
-      <i class="bi bi-search"></i>
-      <input type="search" class="form-control form-control-sm entity-filter" placeholder="Search receipts" aria-label="Filter receipts" data-table-filter="#receipts-table">
-    </div>
   </div>
+
+  <form method="GET" action="{{ route('admin.receipts.index') }}" class="px-3 pb-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-lg-4">
+        <label class="form-label mb-1">Search</label>
+        <div class="entity-filter-wrap w-100">
+          <i class="bi bi-search"></i>
+          <input type="search" name="search" value="{{ $filters['search'] }}" class="form-control form-control-sm entity-filter" placeholder="Receipt, customer, cashier, reference">
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-2">
+        <label class="form-label mb-1">Method</label>
+        <select name="method" class="form-control form-control-sm">
+          <option value="">All methods</option>
+          @foreach($paymentMethods as $method)
+            <option value="{{ $method }}" @selected($filters['method'] === $method)>{{ $method }}</option>
+          @endforeach
+        </select>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-2">
+        <label class="form-label mb-1">From</label>
+        <input type="date" name="date_from" value="{{ $filters['date_from'] }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-12 col-sm-6 col-lg-2">
+        <label class="form-label mb-1">To</label>
+        <input type="date" name="date_to" value="{{ $filters['date_to'] }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-12 col-sm-6 col-lg-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="bi bi-funnel"></i> Filter</button>
+        <a href="{{ route('admin.receipts.index') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+      </div>
+    </div>
+  </form>
 
   <div class="table-responsive">
     <table class="table align-items-center table-flush receipts-table" id="receipts-table">

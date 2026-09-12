@@ -15,7 +15,7 @@ class ReceiptController extends Controller
 
         $items = DB::table('pos_order_items as i')
             ->join('pos_products as p', 'p.id', '=', 'i.product_id')
-            ->select('i.*', 'p.name as product_name')
+            ->select('i.*', 'p.name as product_name', 'p.image as product_image')
             ->where('i.order_id', $id)
             ->get();
 
@@ -31,7 +31,7 @@ class ReceiptController extends Controller
 
         $items = DB::table('pos_order_items as i')
             ->join('pos_products as p', 'p.id', '=', 'i.product_id')
-            ->select('i.*', 'p.name as product_name')
+            ->select('i.*', 'p.name as product_name', 'p.image as product_image')
             ->where('i.order_id', $id)
             ->get();
 

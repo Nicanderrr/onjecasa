@@ -181,6 +181,7 @@
       key: paystackPublicKey,
       email: @json(auth()->user()->email ?? 'admin@example.com'),
       amount, currency: 'GHS',
+      channels: ['mobile_money'],
       callback: function(response) {
         paystackRefInput.value = response.reference;
         orderForm.submit();

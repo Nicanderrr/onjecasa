@@ -16,12 +16,17 @@
   $loginPreview = !empty($loginImage)
     ? asset('assets/admin/img/settings/' . $loginImage)
     : asset('assets/adminhmd/images/png/dasher-ui-bootstrap-5.jpg');
+  $cashierLoginPreview = !empty($cashierLoginImage)
+    ? asset('assets/admin/img/settings/' . $cashierLoginImage)
+    : asset('assets/adminhmd/images/png/dasher-ui-bootstrap-5.jpg');
   $pinPreview = !empty($pinImage)
     ? asset('assets/admin/img/settings/' . $pinImage)
     : asset('assets/adminhmd/images/png/dasher-ai.png');
   $logoPreview = !empty($sidebarLogo)
     ? asset('assets/admin/img/settings/' . $sidebarLogo)
     : asset('logo.png');
+  $profilePreview = auth()->user()->avatarUrl();
+  $isVideoMedia = fn (?string $path) => in_array(strtolower(pathinfo((string) $path, PATHINFO_EXTENSION)), ['mp4', 'webm', 'ogg', 'mov'], true);
 @endphp
 
 <div class="settings-page">
@@ -43,11 +48,22 @@
           <div class="settings-group">
             <h3>Identity & Security</h3>
             <div class="row g-3">
-              <div class="col-md-6">
+              <div class="col-md-4">
+                <label class="form-label">Profile Photo</label>
+                <input type="file" name="avatar" class="form-control" accept=".jpg,.jpeg,.png,.webp">
+                <div class="settings-help">Use a square image for the best profile display. Max 2MB.</div>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Current</label>
+                <div class="settings-image-frame" style="max-width: 120px;">
+                  <img src="{{ $profilePreview }}" alt="Current profile photo">
+                </div>
+              </div>
+              <div class="col-md-3">
                 <label class="form-label">Name</label>
                 <input name="name" value="{{ auth()->user()->name }}" class="form-control" required>
               </div>
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label class="form-label">Email</label>
                 <input type="email" name="email" value="{{ auth()->user()->email }}" class="form-control" required>
               </div>
@@ -56,11 +72,6 @@
                 <input type="password" name="password" class="form-control" placeholder="Leave blank to keep the current password">
                 <div class="settings-help">Only set this if you want to change the admin login password.</div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label">New Pincode</label>
-                <input type="password" name="pincode" class="form-control" placeholder="Leave blank to keep the current PIN">
-                <div class="settings-help">This controls the admin PIN screen after login.</div>
-              </div>
             </div>
           </div>
 
@@ -68,14 +79,59 @@
             <h3>Branding & Appearance</h3>
             <div class="row g-3">
               <div class="col-md-8">
-                <label class="form-label">Login Image</label>
-                <input type="file" name="login_image" class="form-control" accept=".jpg,.jpeg,.png,.webp">
-                <div class="settings-help">This image appears on the main login screen. Recommended wide image. Max 4MB.</div>
+                <label class="form-label">Admin Login Image / Video</label>
+                <input type="file" name="login_image" class="form-control" accept=".jpg,.jpeg,.png,.webp,.mp4,.webm,.ogg,.mov">
+                <div class="settings-help">This media appears on the /admin login screen. Recommended wide image or muted loop video. Max 20MB.</div>
               </div>
               <div class="col-md-4">
-                <label class="form-label">Current Login Image</label>
+                <label class="form-label">Current Admin Login Media</label>
                 <div class="settings-image-frame">
-                  <img src="{{ $loginPreview }}" alt="Current login image">
+                  @if($isVideoMedia($loginImage))
+                    <video src="{{ $loginPreview }}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                  @else
+                    <img src="{{ $loginPreview }}" alt="Current admin login image">
+                  @endif
+                </div>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Cashier Login Image / Video</label>
+                <input type="file" name="cashier_login_image" class="form-control" accept=".jpg,.jpeg,.png,.webp,.mp4,.webm,.ogg,.mov">
+                <div class="settings-help">This media appears on the public cashier OTP login screen. Max 20MB.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Current Cashier Login Media</label>
+                <div class="settings-image-frame">
+                  @if($isVideoMedia($cashierLoginImage))
+                    <video src="{{ $cashierLoginPreview }}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                  @else
+                    <img src="{{ $cashierLoginPreview }}" alt="Current cashier login image">
+                  @endif
+                </div>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Cashier Login Dark Overlay (40 - 85)</label>
+                <input type="range" min="40" max="85" name="cashier_login_overlay" value="{{ $cashierLoginOverlay ?? 72 }}" class="form-range" id="cashier_login_overlay_range">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                  <input type="number" min="40" max="85" id="cashier_login_overlay_input" value="{{ $cashierLoginOverlay ?? 72 }}" class="form-control" style="max-width:120px;">
+                  <span class="settings-help mb-0">Higher values create a darker staff login overlay.</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Cashier Login Hue Color</label>
+                <select name="cashier_login_overlay_color" id="cashier_login_overlay_color" class="form-select">
+                  <option value="red" {{ ($cashierLoginOverlayColor ?? 'green') === 'red' ? 'selected' : '' }}>Red</option>
+                  <option value="blue" {{ ($cashierLoginOverlayColor ?? 'green') === 'blue' ? 'selected' : '' }}>Blue</option>
+                  <option value="green" {{ ($cashierLoginOverlayColor ?? 'green') === 'green' ? 'selected' : '' }}>Green</option>
+                  <option value="amber" {{ ($cashierLoginOverlayColor ?? 'green') === 'amber' ? 'selected' : '' }}>Amber</option>
+                  <option value="slate" {{ ($cashierLoginOverlayColor ?? 'green') === 'slate' ? 'selected' : '' }}>Slate</option>
+                  <option value="purple" {{ ($cashierLoginOverlayColor ?? 'green') === 'purple' ? 'selected' : '' }}>Purple</option>
+                </select>
+                <div id="cashier_login_overlay_preview" class="mt-2 d-flex align-items-center gap-2 rounded-3 px-3 py-2 border" style="min-height: 44px;">
+                  <span class="rounded-circle border" style="width:14px;height:14px;background:#10b981;display:inline-block;"></span>
+                  <div class="small lh-sm">
+                    <div class="fw-semibold">Live preview</div>
+                    <div class="text-muted" id="cashier_login_overlay_preview_text">Green tint at 72%</div>
+                  </div>
                 </div>
               </div>
               <div class="col-md-8">
@@ -105,26 +161,30 @@
                 </div>
               </div>
               <div class="col-md-8">
-                <label class="form-label">PIN Side Image</label>
-                <input type="file" name="pin_image" class="form-control" accept=".jpg,.jpeg,.png,.webp">
-                <div class="settings-help">This image appears on the admin PIN screen. Max 4MB.</div>
+                <label class="form-label">OTP Side Image / Video</label>
+                <input type="file" name="pin_image" class="form-control" accept=".jpg,.jpeg,.png,.webp,.mp4,.webm,.ogg,.mov">
+                <div class="settings-help">This media appears on the admin OTP screen. Max 20MB.</div>
               </div>
               <div class="col-md-4">
-                <label class="form-label">Current PIN Image</label>
+                <label class="form-label">Current OTP Media</label>
                 <div class="settings-image-frame">
-                  <img src="{{ $pinPreview }}" alt="Current PIN image">
+                  @if($isVideoMedia($pinImage))
+                    <video src="{{ $pinPreview }}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                  @else
+                    <img src="{{ $pinPreview }}" alt="Current OTP image">
+                  @endif
                 </div>
               </div>
               <div class="col-md-8">
-                <label class="form-label">PIN Side Dark Overlay (40 - 85)</label>
+                <label class="form-label">OTP Side Dark Overlay (40 - 85)</label>
                 <input type="range" min="40" max="85" name="pin_overlay" value="{{ $pinOverlay ?? 72 }}" class="form-range" id="pin_overlay_range">
                 <div class="d-flex align-items-center gap-3 flex-wrap">
                   <input type="number" min="40" max="85" id="pin_overlay_input" value="{{ $pinOverlay ?? 72 }}" class="form-control" style="max-width:120px;">
-                  <span class="settings-help mb-0">Higher values create a darker PIN screen overlay.</span>
+                  <span class="settings-help mb-0">Higher values create a darker OTP screen overlay.</span>
                 </div>
               </div>
               <div class="col-md-4">
-                <label class="form-label">PIN Hue Color</label>
+                <label class="form-label">OTP Hue Color</label>
                 <select name="pin_overlay_color" id="pin_overlay_color" class="form-select">
                   <option value="red" {{ ($pinOverlayColor ?? 'green') === 'red' ? 'selected' : '' }}>Red</option>
                   <option value="blue" {{ ($pinOverlayColor ?? 'green') === 'blue' ? 'selected' : '' }}>Blue</option>
@@ -201,13 +261,18 @@
   (function () {
     const range = document.getElementById('login_overlay_range');
     const input = document.getElementById('login_overlay_input');
+    const cashierRange = document.getElementById('cashier_login_overlay_range');
+    const cashierInput = document.getElementById('cashier_login_overlay_input');
     const pinRange = document.getElementById('pin_overlay_range');
     const pinInput = document.getElementById('pin_overlay_input');
     const loginColor = document.getElementById('login_overlay_color');
+    const cashierColor = document.getElementById('cashier_login_overlay_color');
     const pinColor = document.getElementById('pin_overlay_color');
     const loginPreview = document.getElementById('login_overlay_preview');
+    const cashierPreview = document.getElementById('cashier_login_overlay_preview');
     const pinPreview = document.getElementById('pin_overlay_preview');
     const loginPreviewText = document.getElementById('login_overlay_preview_text');
+    const cashierPreviewText = document.getElementById('cashier_login_overlay_preview_text');
     const pinPreviewText = document.getElementById('pin_overlay_preview_text');
 
     const colorMap = {
@@ -257,8 +322,10 @@
     };
 
     syncPair(range, input);
+    syncPair(cashierRange, cashierInput);
     syncPair(pinRange, pinInput);
     syncPreview(loginColor, [range, input], loginPreview, loginPreviewText);
+    syncPreview(cashierColor, [cashierRange, cashierInput], cashierPreview, cashierPreviewText);
     syncPreview(pinColor, [pinRange, pinInput], pinPreview, pinPreviewText);
   })();
 </script>

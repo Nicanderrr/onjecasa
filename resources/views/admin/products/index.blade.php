@@ -5,6 +5,9 @@
 @section('page-title', 'Products')
 @section('page-description', 'Track stock levels, pricing, and catalog updates from one compact view.')
 @section('page-actions')
+  <a href="{{ route('admin.products.import.create') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-file-earmark-arrow-up"></i> Bulk Import
+  </a>
   <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-sm">
     <i class="fas fa-utensils"></i> Add Product
   </a>
@@ -12,7 +15,7 @@
 
 @section('content')
 @php
-  $lowStock = $products->filter(fn ($prod) => (int) ($prod->stock ?? 0) <= 10)->count();
+  $lowStock = $products->filter(fn ($prod) => (int) ($prod->stock ?? 0) <= (int) ($prod->low_stock_threshold ?? 5))->count();
   $inventoryValue = $products->sum(fn ($prod) => (float) ($prod->price ?? 0) * (int) ($prod->stock ?? 0));
 @endphp
 
@@ -35,7 +38,7 @@
           <span class="metric-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
         </div>
         <div class="metric-value">{{ $lowStock }}</div>
-        <div class="metric-meta"><span class="text-danger">Attention</span><span>10 units or fewer</span></div>
+        <div class="metric-meta"><span class="text-danger">Attention</span><span>at alert threshold</span></div>
       </article>
     </div>
     <div class="col-12 col-md-4">
@@ -87,8 +90,9 @@
           @forelse($products as $prod)
             @php
               $stock = (int) ($prod->stock ?? 0);
-              $stockState = $stock === 0 ? 'out' : ($stock <= 10 ? 'low' : 'ok');
-              $stockLabel = $stock === 0 ? 'Out of stock' : ($stock <= 10 ? 'Low stock' : 'In stock');
+              $threshold = (int) ($prod->low_stock_threshold ?? 5);
+              $stockState = $stock === 0 ? 'out' : ($stock <= $threshold ? 'low' : 'ok');
+              $stockLabel = $stock === 0 ? 'Out of stock' : ($stock <= $threshold ? 'Low stock' : 'In stock');
             @endphp
             <tr data-filter-row>
               <td class="product-cell">
@@ -110,7 +114,7 @@
               <td>
                 <div class="product-stock">
                   <span class="stock-pill {{ $stockState }}"><span class="stock-dot"></span>{{ $stockLabel }}</span>
-                  <small>{{ $stock }} {{ \Illuminate\Support\Str::plural('unit', $stock) }}</small>
+                  <small>{{ $stock }} {{ \Illuminate\Support\Str::plural('unit', $stock) }} &middot; alert at {{ $threshold }}</small>
                 </div>
               </td>
               <td><span class="product-price">{{ number_format($prod->price, 2) }}</span></td>

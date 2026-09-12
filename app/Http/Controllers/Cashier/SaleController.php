@@ -7,6 +7,7 @@ use App\Support\AuditTrail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -15,15 +16,31 @@ class SaleController extends Controller
     public function create(): View
     {
         $products = DB::table('pos_products')->orderBy('name')->get();
+        $activeShift = DB::table('pos_cashier_shifts')
+            ->where('cashier_user_id', auth()->id())
+            ->whereNull('ended_at')
+            ->orderByDesc('started_at')
+            ->first();
 
-        return view('cashier.sales.create', compact('products'));
+        return view('cashier.sales.create', compact('products', 'activeShift'));
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $activeShift = DB::table('pos_cashier_shifts')
+            ->where('cashier_user_id', auth()->id())
+            ->whereNull('ended_at')
+            ->orderByDesc('started_at')
+            ->first();
+
+        if (! $activeShift) {
+            throw ValidationException::withMessages(['shift' => 'Start your cashier shift before making a sale.']);
+        }
+
         $base = $request->validate([
             'customer_name' => ['required', 'string', 'max:255'],
-            'payment_method' => ['required', 'string', 'max:50'],
+            'payment_method' => ['required', 'in:Cash,Mobile Money,Credit Card'],
+            'paystack_reference' => ['nullable', 'string', 'max:255'],
             'items' => ['required', 'array'],
             'items.*.product_id' => ['nullable', 'integer'],
             'items.*.qty' => ['nullable', 'integer', 'min:1'],
@@ -74,6 +91,34 @@ class SaleController extends Controller
                 ];
             }
 
+            if ($base['payment_method'] === 'Mobile Money') {
+                if (empty($base['paystack_reference'])) {
+                    throw ValidationException::withMessages(['payment_method' => 'Missing Paystack payment reference.']);
+                }
+
+                $secretKey = config('services.paystack.secret_key');
+                if (empty($secretKey)) {
+                    throw ValidationException::withMessages(['payment_method' => 'Paystack secret key is not configured.']);
+                }
+
+                $response = Http::withToken($secretKey)
+                    ->acceptJson()
+                    ->get('https://api.paystack.co/transaction/verify/' . urlencode($base['paystack_reference']));
+
+                if (! $response->ok() || ! data_get($response->json(), 'status')) {
+                    throw ValidationException::withMessages(['payment_method' => 'Unable to verify Paystack transaction.']);
+                }
+
+                $paystackData = data_get($response->json(), 'data', []);
+                $status = (string) data_get($paystackData, 'status', '');
+                $amountKobo = (int) data_get($paystackData, 'amount', 0);
+                $expectedKobo = (int) round($grandTotal * 100);
+
+                if ($status !== 'success' || $amountKobo !== $expectedKobo) {
+                    throw ValidationException::withMessages(['payment_method' => 'Paystack payment verification failed.']);
+                }
+            }
+
             $orderId = DB::table('pos_orders')->insertGetId([
                 'code' => 'ORD-' . now()->format('YmdHis') . '-' . random_int(100, 999),
                 'customer_name' => $base['customer_name'],
@@ -104,6 +149,7 @@ class SaleController extends Controller
                 'order_id' => $orderId,
                 'method' => $base['payment_method'],
                 'amount' => $grandTotal,
+                'paystack_reference' => $base['payment_method'] === 'Mobile Money' ? ($base['paystack_reference'] ?? null) : null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

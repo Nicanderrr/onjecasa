@@ -46,6 +46,66 @@
   </div>
 </section>
 
+@if($stats['low_stock_count'] > 0 || $stats['active_shift_count'] > 0)
+<section class="row g-3 mt-1" aria-label="Operational alerts">
+  <div class="col-12 col-xl-6">
+    <div class="panel h-100">
+      <div class="panel-header">
+        <div>
+          <h2 class="h5 mb-1 section-title"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><span>Low Stock</span></h2>
+          <p class="text-muted mb-0">{{ $stats['low_stock_count'] }} product(s) need restock attention.</p>
+        </div>
+        <a class="btn btn-light btn-sm" href="{{ route('admin.products.index') }}">Inventory</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead><tr><th>Product</th><th>Stock</th><th>Alert At</th></tr></thead>
+          <tbody>
+            @forelse($lowStockProducts as $product)
+              <tr>
+                <td><strong>{{ $product->name }}</strong><small class="d-block text-muted">{{ $product->code }}</small></td>
+                <td><span class="badge text-bg-danger">{{ $product->stock }}</span></td>
+                <td>{{ $product->low_stock_threshold }}</td>
+              </tr>
+            @empty
+              <tr><td colspan="3" class="text-center text-muted py-4">Inventory is above alert thresholds.</td></tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div class="panel h-100">
+      <div class="panel-header">
+        <div>
+          <h2 class="h5 mb-1 section-title"><i class="bi bi-stopwatch" aria-hidden="true"></i><span>Active Shifts</span></h2>
+          <p class="text-muted mb-0">{{ $stats['active_shift_count'] }} cashier shift(s) currently open.</p>
+        </div>
+        <a class="btn btn-light btn-sm" href="{{ route('admin.staff.index') }}">Cashiers</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead><tr><th>Cashier</th><th>Started</th><th>Opening</th></tr></thead>
+          <tbody>
+            @forelse($activeShifts as $shift)
+              <tr>
+                <td><strong>{{ $shift->cashier_name }}</strong><small class="d-block text-muted">{{ $shift->cashier_email }}</small></td>
+                <td>{{ \Illuminate\Support\Carbon::parse($shift->started_at)->format('d M, h:i A') }}</td>
+                <td>{{ number_format((float) $shift->opening_cash, 2) }}</td>
+              </tr>
+            @empty
+              <tr><td colspan="3" class="text-center text-muted py-4">No cashier shifts are active right now.</td></tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+@endif
+
 <section class="row g-3 mt-1 dashboard-charts" aria-label="Sales charts">
   <div class="col-12 col-xl-8">
     <div class="panel chart-panel h-100">
