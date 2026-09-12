@@ -1,4 +1,3 @@
 <?php
 
-header('Location: pos/admin/index.php');
-exit;
+require __DIR__.'/public/index.php';
