@@ -44,4 +44,11 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
     ],
 
+    'whatsapp' => [
+        'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'api_version' => env('WHATSAPP_API_VERSION', 'v20.0'),
+        'default_country_code' => env('WHATSAPP_DEFAULT_COUNTRY_CODE', '233'),
+    ],
+
 ];

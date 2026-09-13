@@ -113,6 +113,9 @@
         <section class="form-grid">
           <div class="field"><span class="label">Name</span><span class="value">{{ $order->customer_name }}</span></div>
           <div class="field"><span class="label">Date</span><span class="value">{{ $receiptDate->format('d/m/Y') }}</span></div>
+          @if(!empty($order->customer_whatsapp))
+            <div class="field"><span class="label">WhatsApp</span><span class="value">{{ $order->customer_whatsapp }}</span></div>
+          @endif
           <div class="field"><span class="label">Order No.</span><span class="value">{{ $order->code }}</span></div>
           <div class="field"><span class="label">Items</span><span class="value">{{ number_format((int) $itemCount) }}</span></div>
         </section>

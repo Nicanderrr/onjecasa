@@ -49,7 +49,15 @@
   <div class="panel sticky-panel">
     <div class="panel-h">Checkout Panel</div>
     <div class="panel-b">
-      <input type="hidden" name="customer_name" value="Walk-in">
+      <div class="form-group">
+        <label class="mini">Customer Name</label>
+        <input class="form-control" name="customer_name" value="{{ old('customer_name', 'Walk-in') }}" required>
+      </div>
+      <div class="form-group">
+        <label class="mini">WhatsApp Number</label>
+        <input class="form-control" name="customer_whatsapp" value="{{ old('customer_whatsapp') }}" inputmode="tel" autocomplete="tel" placeholder="0240000000">
+        <div class="mini">Optional. Sends the receipt by WhatsApp when configured.</div>
+      </div>
       <div class="form-group">
         <label class="mini">Payment Method</label>
         <select class="form-control" name="payment_method" id="payment_method" required>

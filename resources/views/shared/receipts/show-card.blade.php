@@ -443,6 +443,12 @@
             <span class="receipt-field-label">Date</span>
             <span class="receipt-field-value">{{ $receiptDate->format('d/m/Y') }}</span>
           </div>
+          @if(!empty($order->customer_whatsapp))
+            <div class="receipt-field">
+              <span class="receipt-field-label">WhatsApp</span>
+              <span class="receipt-field-value">{{ $order->customer_whatsapp }}</span>
+            </div>
+          @endif
           <div class="receipt-field">
             <span class="receipt-field-label">Order No.</span>
             <span class="receipt-field-value">{{ $order->code }}</span>

@@ -543,6 +543,12 @@
         </div>
 
         <div class="form-group mb-3">
+          <label class="mb-2">WhatsApp Number</label>
+          <input class="form-control" name="customer_whatsapp" value="{{ old('customer_whatsapp') }}" inputmode="tel" autocomplete="tel" placeholder="0240000000">
+          <small class="text-muted">Optional. A receipt will be sent if WhatsApp is configured.</small>
+        </div>
+
+        <div class="form-group mb-3">
           <label class="mb-2">Payment Method</label>
         <select class="form-control" name="payment_method" id="payment_method" required>
           <option @selected(old('payment_method') === 'Cash')>Cash</option>
@@ -875,6 +881,7 @@
       channels: ['mobile_money'],
       metadata: {
         customer_name: document.querySelector('[name="customer_name"]')?.value || 'Walk-in',
+        customer_whatsapp: document.querySelector('[name="customer_whatsapp"]')?.value || '',
         payment_method: 'Mobile Money',
       },
     };

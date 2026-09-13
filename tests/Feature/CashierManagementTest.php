@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -181,6 +182,64 @@ class CashierManagementTest extends TestCase
         Mail::assertSentCount(1);
 
         $this->assertNotNull(DB::table('pos_products')->where('id', $productId)->value('low_stock_notified_at'));
+    }
+
+    public function test_cashier_sale_sends_whatsapp_receipt_when_number_is_supplied(): void
+    {
+        config([
+            'services.whatsapp.access_token' => 'test-token',
+            'services.whatsapp.phone_number_id' => '123456789',
+            'services.whatsapp.api_version' => 'v20.0',
+            'services.whatsapp.default_country_code' => '233',
+        ]);
+
+        Http::fake([
+            'https://graph.facebook.com/v20.0/123456789/messages' => Http::response(['messages' => [['id' => 'wamid.test']]], 200),
+        ]);
+
+        $cashier = User::factory()->create([
+            'role' => 'cashier',
+            'is_active' => true,
+        ]);
+
+        $productId = DB::table('pos_products')->insertGetId([
+            'code' => 'WA-001',
+            'name' => 'WhatsApp Product',
+            'description' => '',
+            'price' => 15,
+            'stock' => 10,
+            'low_stock_threshold' => 2,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($cashier)
+            ->post(route('cashier.sales.store'), [
+                'customer_name' => 'Nana Buyer',
+                'customer_whatsapp' => '0240000000',
+                'payment_method' => 'Cash',
+                'items' => [
+                    ['product_id' => $productId, 'qty' => 2],
+                ],
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('pos_orders', [
+            'customer_name' => 'Nana Buyer',
+            'customer_whatsapp' => '0240000000',
+            'grand_total' => 30,
+        ]);
+
+        Http::assertSent(function ($request) {
+            $payload = $request->data();
+
+            return $request->url() === 'https://graph.facebook.com/v20.0/123456789/messages'
+                && $request->hasHeader('Authorization', 'Bearer test-token')
+                && $payload['messaging_product'] === 'whatsapp'
+                && $payload['to'] === '233240000000'
+                && str_contains($payload['text']['body'], 'Receipt: ORD-')
+                && str_contains($payload['text']['body'], 'WhatsApp Product x2 - 30.00');
+        });
     }
 
     public function test_cashier_dashboard_shows_low_stock_products_by_threshold(): void
