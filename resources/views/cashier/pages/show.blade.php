@@ -40,35 +40,6 @@
 
 @if($page !== 'settings')
 @if($page === 'dashboard')
-<section class="row g-3 mt-1" aria-label="Stock alerts">
-  <div class="col-12">
-    <div class="panel h-100">
-      <div class="panel-header">
-        <div>
-          <h2 class="h5 mb-1 section-title"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><span>Low Stock Alerts</span></h2>
-          <p class="text-muted mb-0">Products at or below their alert threshold.</p>
-        </div>
-      </div>
-      <div class="table-responsive">
-        <table class="table align-middle mb-0">
-          <thead><tr><th>Product</th><th>Stock</th><th>Alert At</th></tr></thead>
-          <tbody>
-            @forelse($lowStockProducts as $product)
-              <tr>
-                <td><strong>{{ $product->name }}</strong><small class="d-block text-muted">{{ $product->code }}</small></td>
-                <td><span class="badge text-bg-danger">{{ $product->stock }}</span></td>
-                <td>{{ $product->low_stock_threshold }}</td>
-              </tr>
-            @empty
-              <tr><td colspan="3" class="text-center text-muted py-4">No low-stock products right now.</td></tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</section>
-
 <section class="row g-3 mt-1" aria-label="Cashier quick actions">
   <div class="col-12 col-sm-6 col-xl-4">
     <a href="{{ route('cashier.sales.create') }}" class="text-decoration-none">

@@ -75,7 +75,6 @@ class PageController extends Controller
                 'order_count' => DB::table('pos_orders')->count(),
                 'sales_total' => (float) DB::table('pos_payments')->sum('amount'),
             ],
-            'lowStockProducts' => $this->lowStockProducts(),
         ];
 
         return view('cashier.pages.show', $data);
@@ -119,13 +118,4 @@ class PageController extends Controller
         return $fileName;
     }
 
-    private function lowStockProducts()
-    {
-        return DB::table('pos_products')
-            ->whereColumn('stock', '<=', 'low_stock_threshold')
-            ->orderBy('stock')
-            ->orderBy('name')
-            ->limit(8)
-            ->get();
-    }
 }

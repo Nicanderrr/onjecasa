@@ -172,8 +172,10 @@ class CashierManagementTest extends TestCase
         $this->actingAs($cashier)
             ->get(route('cashier.pages.show', 'dashboard'))
             ->assertOk()
+            ->assertSee('Low Stock Alerts')
             ->assertSee('Low Product')
-            ->assertDontSee('Healthy Product');
+            ->assertDontSee('Healthy Product')
+            ->assertDontSee('Products at or below their alert threshold.');
     }
 
     public function test_dashboard_and_orders_show_cashier_performance(): void

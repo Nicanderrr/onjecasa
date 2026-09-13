@@ -21,6 +21,39 @@
     .cashier-badge { display:inline-flex; align-items:center; gap:.5rem; }
     .sidebar-user .avatar-img { object-fit: cover; }
     .brand-icon img { width: 100%; height: 100%; display: block; object-fit: contain; border-radius: .95rem; background: #fff; }
+    .cashier-notification { position: relative; }
+    .cashier-notification-count {
+      position: absolute;
+      top: -.25rem;
+      right: -.25rem;
+      min-width: 1.1rem;
+      height: 1.1rem;
+      display: inline-grid;
+      place-items: center;
+      padding: 0 .25rem;
+      border-radius: 999px;
+      background: #dc2626;
+      color: #fff;
+      border: 2px solid #fff;
+      font-size: .62rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .cashier-notification-menu {
+      width: min(23rem, calc(100vw - 2rem));
+      max-height: 26rem;
+      overflow-y: auto;
+      border-radius: 8px;
+    }
+    .cashier-notification-item {
+      display: grid;
+      gap: .15rem;
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--admin-border);
+    }
+    .cashier-notification-item:last-child { border-bottom: 0; }
+    .cashier-notification-item strong { color: var(--admin-text); font-size: .9rem; line-height: 1.2; }
+    .cashier-notification-item span { color: var(--admin-muted); font-size: .78rem; }
 
     .admin-sidebar {
       background:
@@ -171,6 +204,15 @@
   $userAvatar = $user?->avatarUrl();
   $systemName = \Illuminate\Support\Facades\DB::table('pos_settings')->where('key', 'system_name')->value('value') ?? 'NewPOS';
   $sidebarLogoUrl = $layoutLogoUrl;
+  $cashierLowStockProducts = \Illuminate\Support\Facades\DB::table('pos_products')
+      ->whereColumn('stock', '<=', 'low_stock_threshold')
+      ->orderBy('stock')
+      ->orderBy('name')
+      ->limit(8)
+      ->get();
+  $cashierLowStockCount = \Illuminate\Support\Facades\DB::table('pos_products')
+      ->whereColumn('stock', '<=', 'low_stock_threshold')
+      ->count();
   $cashierPageIs = function (string $page): bool {
       return request()->routeIs('cashier.pages.show') && request()->route('page') === $page;
   };
@@ -349,6 +391,27 @@
           </div>
 
           <div class="navbar-actions ms-auto">
+            <div class="dropdown">
+              <button class="icon-button cashier-notification" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Low stock notifications" title="Low stock notifications">
+                <i class="bi {{ $cashierLowStockCount > 0 ? 'bi-bell-fill' : 'bi-bell' }}" aria-hidden="true"></i>
+                @if($cashierLowStockCount > 0)
+                  <span class="cashier-notification-count">{{ $cashierLowStockCount > 99 ? '99+' : $cashierLowStockCount }}</span>
+                @endif
+              </button>
+              <div class="dropdown-menu dropdown-menu-end cashier-notification-menu">
+                <h6 class="dropdown-header">Low Stock Alerts</h6>
+                @forelse($cashierLowStockProducts as $product)
+                  <div class="cashier-notification-item">
+                    <strong>{{ $product->name }}</strong>
+                    <span>{{ $product->code }} · Stock {{ $product->stock }} · Alert at {{ $product->low_stock_threshold }}</span>
+                  </div>
+                @empty
+                  <div class="px-3 py-3 text-muted small">No low-stock products right now.</div>
+                @endforelse
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item small" href="{{ route('cashier.pages.show', 'products') }}">View products</a>
+              </div>
+            </div>
             <button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme" title="Switch color theme">
               <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
             </button>
