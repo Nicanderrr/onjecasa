@@ -16,8 +16,8 @@ class AuditTrailController extends Controller
             'event' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $baseQuery = DB::table('pos_audit_trails');
-        $query = DB::table('pos_audit_trails')->orderByDesc('created_at')->orderByDesc('id');
+        $baseQuery = $this->visibleAuditQuery();
+        $query = $this->visibleAuditQuery()->orderByDesc('created_at')->orderByDesc('id');
 
         if (!empty($filters['event'])) {
             $query->where('event', $filters['event']);
@@ -41,9 +41,18 @@ class AuditTrailController extends Controller
             'latest_audit_at' => (clone $baseQuery)->max('created_at'),
         ];
 
-        $events = DB::table('pos_audit_trails')->select('event')->distinct()->orderBy('event')->pluck('event');
+        $events = $this->visibleAuditQuery()->select('event')->distinct()->orderBy('event')->pluck('event');
         $audits = $query->paginate(25)->withQueryString();
 
         return view('admin.audit-trails.index', compact('audits', 'events', 'filters', 'summary'));
+    }
+
+    private function visibleAuditQuery()
+    {
+        return DB::table('pos_audit_trails')
+            ->where(function ($query) {
+                $query->whereNull('user_role')
+                    ->orWhere('user_role', '!=', 'superadmin');
+            });
     }
 }

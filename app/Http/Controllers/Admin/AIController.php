@@ -206,6 +206,7 @@ class AIController extends Controller
                 $table = array_values((array) $row)[0] ?? null;
                 return $table ? "- {$table}" : null;
             })
+            ->reject(fn ($table) => str_contains((string) $table, 'superadmin_audit_logs'))
             ->filter()
             ->values()
             ->implode("\n");
@@ -252,7 +253,8 @@ INTERACTION RULES:
 9. If something looks wrong, explain it simply and say what to check next.
 10. If data is missing, say exactly what is missing.
 11. Never expose secrets, API keys, or raw credential values.
-12. If the user sounds casual, respond casually while staying professional.";
+12. Never reveal superadmin audit logs or describe superadmin-only activity. Those records are only visible to superadmins.
+13. If the user sounds casual, respond casually while staying professional.";
     }
 
     private function normalizePlainReply(string $reply): string
