@@ -59,6 +59,11 @@
         <div class="mini">Optional. Sends the receipt by WhatsApp when configured.</div>
       </div>
       <div class="form-group">
+        <label class="mini">Email Address</label>
+        <input class="form-control" type="email" name="customer_email" value="{{ old('customer_email') }}" autocomplete="email" placeholder="buyer@example.com">
+        <div class="mini">Optional. Emails the receipt after payment.</div>
+      </div>
+      <div class="form-group">
         <label class="mini">Payment Method</label>
         <select class="form-control" name="payment_method" id="payment_method" required>
           <option>Cash</option>

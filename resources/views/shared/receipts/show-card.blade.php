@@ -449,6 +449,12 @@
               <span class="receipt-field-value">{{ $order->customer_whatsapp }}</span>
             </div>
           @endif
+          @if(!empty($order->customer_email))
+            <div class="receipt-field">
+              <span class="receipt-field-label">Email</span>
+              <span class="receipt-field-value">{{ $order->customer_email }}</span>
+            </div>
+          @endif
           <div class="receipt-field">
             <span class="receipt-field-label">Order No.</span>
             <span class="receipt-field-value">{{ $order->code }}</span>

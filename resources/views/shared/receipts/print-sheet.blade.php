@@ -116,6 +116,9 @@
           @if(!empty($order->customer_whatsapp))
             <div class="field"><span class="label">WhatsApp</span><span class="value">{{ $order->customer_whatsapp }}</span></div>
           @endif
+          @if(!empty($order->customer_email))
+            <div class="field"><span class="label">Email</span><span class="value">{{ $order->customer_email }}</span></div>
+          @endif
           <div class="field"><span class="label">Order No.</span><span class="value">{{ $order->code }}</span></div>
           <div class="field"><span class="label">Items</span><span class="value">{{ number_format((int) $itemCount) }}</span></div>
         </section>

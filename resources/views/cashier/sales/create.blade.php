@@ -549,6 +549,12 @@
         </div>
 
         <div class="form-group mb-3">
+          <label class="mb-2">Email Address</label>
+          <input class="form-control" type="email" name="customer_email" value="{{ old('customer_email') }}" autocomplete="email" placeholder="buyer@example.com">
+          <small class="text-muted">Optional. A receipt will be emailed after payment.</small>
+        </div>
+
+        <div class="form-group mb-3">
           <label class="mb-2">Payment Method</label>
         <select class="form-control" name="payment_method" id="payment_method" required>
           <option @selected(old('payment_method') === 'Cash')>Cash</option>
@@ -882,6 +888,7 @@
       metadata: {
         customer_name: document.querySelector('[name="customer_name"]')?.value || 'Walk-in',
         customer_whatsapp: document.querySelector('[name="customer_whatsapp"]')?.value || '',
+        customer_email: document.querySelector('[name="customer_email"]')?.value || '',
         payment_method: 'Mobile Money',
       },
     };

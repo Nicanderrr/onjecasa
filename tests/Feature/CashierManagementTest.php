@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\CustomerReceiptMail;
 use App\Mail\LowStockAlertMail;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -239,6 +240,50 @@ class CashierManagementTest extends TestCase
                 && $payload['to'] === '233240000000'
                 && str_contains($payload['text']['body'], 'Receipt: ORD-')
                 && str_contains($payload['text']['body'], 'WhatsApp Product x2 - 30.00');
+        });
+    }
+
+    public function test_cashier_sale_sends_email_receipt_when_email_is_supplied(): void
+    {
+        Mail::fake();
+
+        $cashier = User::factory()->create([
+            'role' => 'cashier',
+            'is_active' => true,
+        ]);
+
+        $productId = DB::table('pos_products')->insertGetId([
+            'code' => 'EMAIL-001',
+            'name' => 'Email Receipt Product',
+            'description' => '',
+            'price' => 20,
+            'stock' => 10,
+            'low_stock_threshold' => 2,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($cashier)
+            ->post(route('cashier.sales.store'), [
+                'customer_name' => 'Email Buyer',
+                'customer_email' => 'buyer@example.com',
+                'payment_method' => 'Cash',
+                'items' => [
+                    ['product_id' => $productId, 'qty' => 2],
+                ],
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('pos_orders', [
+            'customer_name' => 'Email Buyer',
+            'customer_email' => 'buyer@example.com',
+            'grand_total' => 40,
+        ]);
+
+        Mail::assertSent(CustomerReceiptMail::class, function (CustomerReceiptMail $mail) {
+            return $mail->hasTo('buyer@example.com')
+                && $mail->order->customer_name === 'Email Buyer'
+                && (float) $mail->order->grand_total === 40.0;
         });
     }
 

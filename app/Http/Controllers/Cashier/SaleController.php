@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
 use App\Support\AuditTrail;
+use App\Support\EmailReceiptSender;
 use App\Support\LowStockNotifier;
 use App\Support\WhatsAppReceiptSender;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +28,7 @@ class SaleController extends Controller
         $base = $request->validate([
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_whatsapp' => ['nullable', 'string', 'max:30'],
+            'customer_email' => ['nullable', 'email', 'max:255'],
             'payment_method' => ['required', 'in:Cash,Mobile Money,Credit Card'],
             'paystack_reference' => ['nullable', 'string', 'max:255'],
             'items' => ['required', 'array'],
@@ -111,6 +113,7 @@ class SaleController extends Controller
                 'code' => 'ORD-' . now()->format('YmdHis') . '-' . random_int(100, 999),
                 'customer_name' => $base['customer_name'],
                 'customer_whatsapp' => $base['customer_whatsapp'] ?? null,
+                'customer_email' => $base['customer_email'] ?? null,
                 'cashier_user_id' => auth()->id(),
                 'grand_total' => $grandTotal,
                 'status' => 'paid',
@@ -146,6 +149,7 @@ class SaleController extends Controller
 
         LowStockNotifier::handleProducts($productIds);
         app(WhatsAppReceiptSender::class)->sendForOrder((int) $orderId);
+        app(EmailReceiptSender::class)->sendForOrder((int) $orderId);
 
         AuditTrail::record('sale_created', 'Created paid cashier sale #' . $orderId, [
             'auditable_type' => 'order',
@@ -153,6 +157,7 @@ class SaleController extends Controller
             'properties' => [
                 'customer_name' => $base['customer_name'],
                 'customer_whatsapp' => $base['customer_whatsapp'] ?? null,
+                'customer_email' => $base['customer_email'] ?? null,
                 'payment_method' => $base['payment_method'],
                 'item_count' => count($items),
             ],
