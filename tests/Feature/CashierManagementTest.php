@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Mail\LowStockAlertMail;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class CashierManagementTest extends TestCase
@@ -138,6 +140,47 @@ class CashierManagementTest extends TestCase
             'id' => $productId,
             'stock' => 8,
         ]);
+    }
+
+    public function test_admin_gets_email_when_sale_creates_low_stock(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create([
+            'email' => 'admin@example.com',
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+        $cashier = User::factory()->create([
+            'role' => 'cashier',
+            'is_active' => true,
+        ]);
+
+        $productId = DB::table('pos_products')->insertGetId([
+            'code' => 'LOW-MAIL',
+            'name' => 'Email Alert Product',
+            'description' => '',
+            'price' => 12,
+            'stock' => 5,
+            'low_stock_threshold' => 3,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($cashier)
+            ->post(route('cashier.sales.store'), [
+                'customer_name' => 'Walk-in',
+                'payment_method' => 'Cash',
+                'items' => [
+                    ['product_id' => $productId, 'qty' => 2],
+                ],
+            ])
+            ->assertRedirect();
+
+        Mail::assertSent(LowStockAlertMail::class, fn (LowStockAlertMail $mail) => $mail->hasTo($admin->email));
+        Mail::assertSentCount(1);
+
+        $this->assertNotNull(DB::table('pos_products')->where('id', $productId)->value('low_stock_notified_at'));
     }
 
     public function test_cashier_dashboard_shows_low_stock_products_by_threshold(): void

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Support\AuditTrail;
+use App\Support\LowStockNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -58,6 +59,8 @@ class ProductCrudController extends Controller
             'auditable_id' => $productId,
             'properties' => ['product' => $data],
         ]);
+
+        LowStockNotifier::handleProduct($productId);
 
         return redirect()->route('admin.products.index')->with('success', 'Product Added');
     }
@@ -117,6 +120,8 @@ class ProductCrudController extends Controller
                 ],
             ],
         ]);
+
+        LowStockNotifier::handleProduct($id);
 
         return redirect()->route('admin.products.index')->with('success', 'Product Updated');
     }

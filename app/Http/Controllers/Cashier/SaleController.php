@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
 use App\Support\AuditTrail;
+use App\Support\LowStockNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -139,6 +140,8 @@ class SaleController extends Controller
                 'updated_at' => now(),
             ]);
         });
+
+        LowStockNotifier::handleProducts($productIds);
 
         AuditTrail::record('sale_created', 'Created paid cashier sale #' . $orderId, [
             'auditable_type' => 'order',

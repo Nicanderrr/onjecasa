@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Support\AuditTrail;
+use App\Support\LowStockNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -132,7 +133,7 @@ class ProductImportController extends Controller
 
     private function importRows(array $rows, string $mode): array
     {
-        $result = ['created' => 0, 'updated' => 0, 'skipped' => 0];
+        $result = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'product_ids' => []];
 
         DB::transaction(function () use ($rows, $mode, &$result) {
             foreach ($rows as $row) {
@@ -165,18 +166,23 @@ class ProductImportController extends Controller
                     ]);
 
                     $result['updated']++;
+                    $result['product_ids'][] = (int) $existing->id;
                     continue;
                 }
 
-                DB::table('pos_products')->insert([
+                $productId = DB::table('pos_products')->insertGetId([
                     ...$product,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
                 $result['created']++;
+                $result['product_ids'][] = (int) $productId;
             }
         });
+
+        LowStockNotifier::handleProducts($result['product_ids']);
+        unset($result['product_ids']);
 
         return $result;
     }
