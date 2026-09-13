@@ -75,56 +75,10 @@ class PageController extends Controller
                 'order_count' => DB::table('pos_orders')->count(),
                 'sales_total' => (float) DB::table('pos_payments')->sum('amount'),
             ],
-            'activeShift' => $this->activeShift(),
-            'shiftSummary' => $this->shiftSummary(),
-            'recentShifts' => $this->recentShifts(),
             'lowStockProducts' => $this->lowStockProducts(),
         ];
 
         return view('cashier.pages.show', $data);
-    }
-
-    public function startShift(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'opening_cash' => ['nullable', 'numeric', 'min:0'],
-        ]);
-
-        if ($this->activeShift()) {
-            return back()->with('error', 'You already have an active shift.');
-        }
-
-        DB::table('pos_cashier_shifts')->insert([
-            'cashier_user_id' => $request->user()->id,
-            'started_at' => now(),
-            'opening_cash' => (float) ($data['opening_cash'] ?? 0),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return back()->with('success', 'Shift started.');
-    }
-
-    public function endShift(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'closing_cash' => ['nullable', 'numeric', 'min:0'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $shift = $this->activeShift();
-        if (! $shift) {
-            return back()->with('error', 'No active shift to close.');
-        }
-
-        DB::table('pos_cashier_shifts')->where('id', $shift->id)->update([
-            'ended_at' => now(),
-            'closing_cash' => isset($data['closing_cash']) ? (float) $data['closing_cash'] : null,
-            'notes' => $data['notes'] ?? null,
-            'updated_at' => now(),
-        ]);
-
-        return back()->with('success', 'Shift closed.');
     }
 
     public function updateProfile(Request $request): RedirectResponse
@@ -163,52 +117,6 @@ class PageController extends Controller
         }
 
         return $fileName;
-    }
-
-    private function activeShift(): ?object
-    {
-        return DB::table('pos_cashier_shifts')
-            ->where('cashier_user_id', auth()->id())
-            ->whereNull('ended_at')
-            ->orderByDesc('started_at')
-            ->first();
-    }
-
-    private function shiftSummary(): array
-    {
-        $shift = $this->activeShift();
-
-        if (! $shift) {
-            return [
-                'orders' => 0,
-                'sales' => 0.0,
-                'started_at' => null,
-            ];
-        }
-
-        $orders = DB::table('pos_orders')
-            ->where('cashier_user_id', auth()->id())
-            ->where('created_at', '>=', $shift->started_at)
-            ->where(function ($query) use ($shift) {
-                if ($shift->ended_at) {
-                    $query->where('created_at', '<=', $shift->ended_at);
-                }
-            });
-
-        return [
-            'orders' => (clone $orders)->count(),
-            'sales' => (float) (clone $orders)->sum('grand_total'),
-            'started_at' => $shift->started_at,
-        ];
-    }
-
-    private function recentShifts()
-    {
-        return DB::table('pos_cashier_shifts')
-            ->where('cashier_user_id', auth()->id())
-            ->orderByDesc('started_at')
-            ->limit(5)
-            ->get();
     }
 
     private function lowStockProducts()

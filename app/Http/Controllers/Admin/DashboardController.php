@@ -16,7 +16,6 @@ class DashboardController extends Controller
             'sales_total' => (float) DB::table('pos_payments')->sum('amount'),
             'cashier_count' => DB::table('users')->where('role', 'cashier')->where('is_active', true)->count(),
             'low_stock_count' => DB::table('pos_products')->whereColumn('stock', '<=', 'low_stock_threshold')->count(),
-            'active_shift_count' => DB::table('pos_cashier_shifts')->whereNull('ended_at')->count(),
         ];
 
         $orders = DB::table('pos_orders as orders')
@@ -65,14 +64,6 @@ class DashboardController extends Controller
             ->limit(8)
             ->get();
 
-        $activeShifts = DB::table('pos_cashier_shifts as shifts')
-            ->join('users as cashier', 'cashier.id', '=', 'shifts.cashier_user_id')
-            ->whereNull('shifts.ended_at')
-            ->select('shifts.*', 'cashier.name as cashier_name', 'cashier.email as cashier_email')
-            ->orderBy('shifts.started_at')
-            ->limit(8)
-            ->get();
-
-        return view('admin.dashboard.index', compact('stats', 'orders', 'cashierPerformance', 'chartData', 'lowStockProducts', 'activeShifts'));
+        return view('admin.dashboard.index', compact('stats', 'orders', 'cashierPerformance', 'chartData', 'lowStockProducts'));
     }
 }

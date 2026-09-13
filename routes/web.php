@@ -10,7 +10,6 @@ use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ReceiptController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\SalesController;
-use App\Http\Controllers\Admin\ShiftController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\AIController as AdminAIController;
 use App\Http\Controllers\Admin\AuditTrailController;
@@ -72,7 +71,6 @@ Route::middleware('auth')->group(function () {
         Route::get('payments-reports', [PaymentController::class, 'index'])->name('payments-reports.index');
 
         Route::get('sales', [SalesController::class, 'index'])->name('sales.index');
-        Route::get('shifts', [ShiftController::class, 'index'])->name('shifts.index');
         Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
         Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
         Route::get('audit-trails', [AuditTrailController::class, 'index'])->name('audit-trails.index');
@@ -87,8 +85,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:cashier')->prefix('cashier')->name('cashier.')->group(function () {
         Route::get('/sales/new', [SaleController::class, 'create'])->name('sales.create');
         Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
-        Route::post('/shifts/start', [CashierPageController::class, 'startShift'])->name('shifts.start');
-        Route::post('/shifts/end', [CashierPageController::class, 'endShift'])->name('shifts.end');
         Route::put('/profile', [CashierPageController::class, 'updateProfile'])->name('profile.update');
         Route::get('/receipts/{id}', [\App\Http\Controllers\Cashier\ReceiptController::class, 'show'])->name('receipts.show');
         Route::get('/receipts/{id}/print', [\App\Http\Controllers\Cashier\ReceiptController::class, 'print'])->name('receipts.print');

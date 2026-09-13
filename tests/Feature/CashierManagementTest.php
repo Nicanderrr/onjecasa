@@ -96,43 +96,7 @@ class CashierManagementTest extends TestCase
         }
     }
 
-    public function test_cashier_can_start_and_end_shift(): void
-    {
-        $cashier = User::factory()->create([
-            'role' => 'cashier',
-            'is_active' => true,
-        ]);
-
-        $this->actingAs($cashier)
-            ->post(route('cashier.shifts.start'), ['opening_cash' => 25])
-            ->assertRedirect();
-
-        $this->assertDatabaseHas('pos_cashier_shifts', [
-            'cashier_user_id' => $cashier->id,
-            'opening_cash' => 25,
-            'ended_at' => null,
-        ]);
-
-        $this->actingAs($cashier)
-            ->get(route('cashier.pages.show', 'dashboard'))
-            ->assertOk()
-            ->assertSee('You are currently clocked in.');
-
-        $this->actingAs($cashier)
-            ->post(route('cashier.shifts.end'), [
-                'closing_cash' => 40,
-                'notes' => 'Balanced drawer',
-            ])
-            ->assertRedirect();
-
-        $this->assertDatabaseHas('pos_cashier_shifts', [
-            'cashier_user_id' => $cashier->id,
-            'closing_cash' => 40,
-            'notes' => 'Balanced drawer',
-        ]);
-    }
-
-    public function test_cashier_must_start_shift_before_sale(): void
+    public function test_cashier_can_make_sale_without_clocking_in(): void
     {
         $cashier = User::factory()->create([
             'role' => 'cashier',
@@ -140,8 +104,8 @@ class CashierManagementTest extends TestCase
         ]);
 
         $productId = DB::table('pos_products')->insertGetId([
-            'code' => 'SHIFT-REQ',
-            'name' => 'Shift Required Product',
+            'code' => 'SALE-NOW',
+            'name' => 'Immediate Sale Product',
             'description' => '',
             'price' => 12,
             'stock' => 10,
@@ -155,47 +119,25 @@ class CashierManagementTest extends TestCase
                 'customer_name' => 'Walk-in',
                 'payment_method' => 'Cash',
                 'items' => [
-                    ['product_id' => $productId, 'qty' => 1],
+                    ['product_id' => $productId, 'qty' => 2],
                 ],
             ])
-            ->assertSessionHasErrors('shift');
-    }
+            ->assertRedirect();
 
-    public function test_admin_can_view_shift_history_with_sales_totals(): void
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $cashier = User::factory()->create([
-            'name' => 'Shift Cashier',
-            'role' => 'cashier',
-            'is_active' => true,
-        ]);
-
-        $shiftId = DB::table('pos_cashier_shifts')->insertGetId([
-            'cashier_user_id' => $cashier->id,
-            'started_at' => now()->subHour(),
-            'opening_cash' => 50,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('pos_orders')->insert([
-            'code' => 'SHIFT-ORDER',
+        $this->assertDatabaseHas('pos_orders', [
             'customer_name' => 'Walk-in',
             'cashier_user_id' => $cashier->id,
-            'grand_total' => 42,
+            'grand_total' => 24,
             'status' => 'paid',
-            'created_at' => now()->subMinutes(20),
-            'updated_at' => now()->subMinutes(20),
         ]);
-
-        $this->actingAs($admin)
-            ->get(route('admin.shifts.index'))
-            ->assertOk()
-            ->assertSee('Shift Cashier')
-            ->assertSee('42.00')
-            ->assertSee('Active');
-
-        $this->assertDatabaseHas('pos_cashier_shifts', ['id' => $shiftId]);
+        $this->assertDatabaseHas('pos_payments', [
+            'method' => 'Cash',
+            'amount' => 24,
+        ]);
+        $this->assertDatabaseHas('pos_products', [
+            'id' => $productId,
+            'stock' => 8,
+        ]);
     }
 
     public function test_cashier_dashboard_shows_low_stock_products_by_threshold(): void

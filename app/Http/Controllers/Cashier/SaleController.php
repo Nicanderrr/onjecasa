@@ -16,27 +16,12 @@ class SaleController extends Controller
     public function create(): View
     {
         $products = DB::table('pos_products')->orderBy('name')->get();
-        $activeShift = DB::table('pos_cashier_shifts')
-            ->where('cashier_user_id', auth()->id())
-            ->whereNull('ended_at')
-            ->orderByDesc('started_at')
-            ->first();
 
-        return view('cashier.sales.create', compact('products', 'activeShift'));
+        return view('cashier.sales.create', compact('products'));
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $activeShift = DB::table('pos_cashier_shifts')
-            ->where('cashier_user_id', auth()->id())
-            ->whereNull('ended_at')
-            ->orderByDesc('started_at')
-            ->first();
-
-        if (! $activeShift) {
-            throw ValidationException::withMessages(['shift' => 'Start your cashier shift before making a sale.']);
-        }
-
         $base = $request->validate([
             'customer_name' => ['required', 'string', 'max:255'],
             'payment_method' => ['required', 'in:Cash,Mobile Money,Credit Card'],

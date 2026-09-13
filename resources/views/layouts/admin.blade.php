@@ -638,11 +638,6 @@
                   'route' => route('admin.receipts.index'),
                   'pattern' => 'admin.receipts.*',
               ],
-              [
-                  'label' => 'Shifts',
-                  'route' => route('admin.shifts.index'),
-                  'pattern' => 'admin.shifts.*',
-              ],
           ],
       ],
       [

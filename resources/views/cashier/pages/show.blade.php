@@ -3,7 +3,7 @@
 @section('content')
 @if($page === 'settings')
 <section class="row g-3 mt-1">
-  <div class="col-12 col-xl-5">
+  <div class="col-12 col-xl-6">
     <div class="panel h-100">
       <div class="panel-header">
         <div>
@@ -35,83 +35,13 @@
       </div>
     </div>
   </div>
-  <div class="col-12 col-xl-7">
-    <div class="panel h-100">
-      <div class="panel-header">
-        <div>
-          <h2 class="h5 mb-1 section-title"><i class="bi bi-clock-history" aria-hidden="true"></i><span>Recent Shifts</span></h2>
-          <p class="text-muted mb-0">Last clock-in sessions for this cashier account.</p>
-        </div>
-      </div>
-      <div class="table-responsive">
-        <table class="table align-middle mb-0">
-          <thead><tr><th>Started</th><th>Ended</th><th>Opening</th><th>Closing</th></tr></thead>
-          <tbody>
-            @forelse($recentShifts as $shift)
-              <tr>
-                <td>{{ \Illuminate\Support\Carbon::parse($shift->started_at)->format('d M, h:i A') }}</td>
-                <td>{{ $shift->ended_at ? \Illuminate\Support\Carbon::parse($shift->ended_at)->format('d M, h:i A') : 'Active' }}</td>
-                <td>{{ number_format((float) $shift->opening_cash, 2) }}</td>
-                <td>{{ $shift->closing_cash !== null ? number_format((float) $shift->closing_cash, 2) : '-' }}</td>
-              </tr>
-            @empty
-              <tr><td colspan="4" class="text-center text-muted py-4">No shifts recorded yet.</td></tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
 </section>
 @endif
 
 @if($page !== 'settings')
 @if($page === 'dashboard')
-<section class="row g-3 mt-1" aria-label="Shift and stock alerts">
-  <div class="col-12 col-xl-5">
-    <div class="panel h-100">
-      <div class="panel-header">
-        <div>
-          <h2 class="h5 mb-1 section-title"><i class="bi bi-stopwatch" aria-hidden="true"></i><span>Shift</span></h2>
-          <p class="text-muted mb-0">{{ $activeShift ? 'You are currently clocked in.' : 'Start a shift before the first sale.' }}</p>
-        </div>
-      </div>
-      @if($activeShift)
-        <div class="row g-3 mb-3">
-          <div class="col-6"><div class="mini-card"><span>Orders</span><strong>{{ $shiftSummary['orders'] }}</strong></div></div>
-          <div class="col-6"><div class="mini-card"><span>Sales</span><strong>{{ number_format($shiftSummary['sales'], 2) }}</strong></div></div>
-        </div>
-        <div class="small text-muted mb-3">Started {{ \Illuminate\Support\Carbon::parse($activeShift->started_at)->format('d M Y, h:i A') }}</div>
-        <form method="POST" action="{{ route('cashier.shifts.end') }}" class="row g-2 align-items-end">
-          @csrf
-          <div class="col-12 col-sm-5">
-            <label class="form-label mb-1">Closing Cash</label>
-            <input type="number" min="0" step="0.01" name="closing_cash" class="form-control form-control-sm" placeholder="0.00">
-          </div>
-          <div class="col-12 col-sm-5">
-            <label class="form-label mb-1">Notes</label>
-            <input type="text" name="notes" class="form-control form-control-sm" placeholder="Optional note">
-          </div>
-          <div class="col-12 col-sm-2">
-            <button class="btn btn-outline-danger btn-sm w-100" type="submit">End</button>
-          </div>
-        </form>
-      @else
-        <form method="POST" action="{{ route('cashier.shifts.start') }}" class="row g-2 align-items-end">
-          @csrf
-          <div class="col-12 col-sm-7">
-            <label class="form-label mb-1">Opening Cash</label>
-            <input type="number" min="0" step="0.01" name="opening_cash" class="form-control" placeholder="0.00">
-          </div>
-          <div class="col-12 col-sm-5">
-            <button class="btn btn-primary w-100" type="submit"><i class="bi bi-play-circle"></i> Start Shift</button>
-          </div>
-        </form>
-      @endif
-    </div>
-  </div>
-
-  <div class="col-12 col-xl-7">
+<section class="row g-3 mt-1" aria-label="Stock alerts">
+  <div class="col-12">
     <div class="panel h-100">
       <div class="panel-header">
         <div>

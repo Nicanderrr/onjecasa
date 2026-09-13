@@ -52,28 +52,6 @@
     font-weight: 800;
   }
 
-  .shift-required-panel {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem;
-    border: 1px solid rgba(245, 158, 11, .35);
-    border-radius: 8px;
-    background: #fffbeb;
-    color: #78350f;
-  }
-
-  .shift-required-panel strong,
-  .shift-required-panel span {
-    display: block;
-  }
-
-  .shift-required-panel span {
-    margin-top: .2rem;
-    font-size: .86rem;
-  }
-
   .pos-scan-panel {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
@@ -433,20 +411,6 @@
   }
 </style>
 
-@if(!$activeShift)
-  <section class="shift-required-panel mb-3">
-    <div>
-      <strong>Start a shift before selling</strong>
-      <span>This keeps the drawer, orders, and cashier performance tied to your work session.</span>
-    </div>
-    <form method="POST" action="{{ route('cashier.shifts.start') }}" class="d-flex gap-2 flex-wrap">
-      @csrf
-      <input type="number" min="0" step="0.01" name="opening_cash" class="form-control" style="max-width: 150px;" placeholder="Opening cash">
-      <button class="btn btn-warning" type="submit"><i class="bi bi-play-circle"></i> Start Shift</button>
-    </form>
-  </section>
-@endif
-
 <form method="POST" action="{{ route('cashier.sales.store') }}" id="order-form" class="pos-order-shell">
   @csrf
 
@@ -609,7 +573,7 @@
 
         <input type="hidden" id="grand_total" value="0">
 
-        <button type="submit" class="btn btn-success btn-block mt-3" id="submit_order_btn" @disabled($products->isEmpty() || !$activeShift)>
+        <button type="submit" class="btn btn-success btn-block mt-3" id="submit_order_btn" @disabled($products->isEmpty())>
           <i class="bi bi-check2-circle"></i> Complete Payment
         </button>
       </div>
@@ -627,7 +591,6 @@
   const addBtn = document.getElementById('btn-add-row');
   const paymentMethod = document.getElementById('payment_method');
   const orderForm = document.getElementById('order-form');
-  const hasActiveShift = @json((bool) $activeShift);
   const paystackPublicKey = @json(config('services.paystack.public_key'));
   const paystackRefInput = document.getElementById('paystack_reference');
   const grandTotalInput = document.getElementById('grand_total');
@@ -699,7 +662,7 @@
     totalText.textContent = total.toFixed(2);
     itemsCountText.textContent = items;
     helper.style.display = total > 0 ? 'none' : '';
-    submitButton.disabled = total <= 0 || !hasActiveShift;
+    submitButton.disabled = total <= 0;
   }
 
   function refreshNames() {
