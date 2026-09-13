@@ -51,4 +51,11 @@ return [
         'default_country_code' => env('WHATSAPP_DEFAULT_COUNTRY_CODE', '233'),
     ],
 
+    'zeckta' => [
+        'endpoint' => env('ZECKTA_SMS_ENDPOINT'),
+        'api_key' => env('ZECKTA_API_KEY'),
+        'sender_id' => env('ZECKTA_SENDER_ID'),
+        'default_country_code' => env('ZECKTA_DEFAULT_COUNTRY_CODE', '233'),
+    ],
+
 ];

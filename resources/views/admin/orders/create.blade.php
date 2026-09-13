@@ -54,9 +54,9 @@
         <input class="form-control" name="customer_name" value="{{ old('customer_name', 'Walk-in') }}" required>
       </div>
       <div class="form-group">
-        <label class="mini">WhatsApp Number</label>
+        <label class="mini">Phone Number</label>
         <input class="form-control" name="customer_whatsapp" value="{{ old('customer_whatsapp') }}" inputmode="tel" autocomplete="tel" placeholder="0240000000">
-        <div class="mini">Optional. Sends the receipt by WhatsApp when configured.</div>
+        <div class="mini">Optional. Sends the receipt link by SMS when Zeckta is configured.</div>
       </div>
       <div class="form-group">
         <label class="mini">Email Address</label>

@@ -445,7 +445,7 @@
           </div>
           @if(!empty($order->customer_whatsapp))
             <div class="receipt-field">
-              <span class="receipt-field-label">WhatsApp</span>
+              <span class="receipt-field-label">Phone</span>
               <span class="receipt-field-value">{{ $order->customer_whatsapp }}</span>
             </div>
           @endif

@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Support\AuditTrail;
 use App\Support\EmailReceiptSender;
 use App\Support\LowStockNotifier;
-use App\Support\WhatsAppReceiptSender;
+use App\Support\ReceiptToken;
+use App\Support\SmsReceiptSender;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -114,6 +115,7 @@ class SaleController extends Controller
                 'customer_name' => $base['customer_name'],
                 'customer_whatsapp' => $base['customer_whatsapp'] ?? null,
                 'customer_email' => $base['customer_email'] ?? null,
+                'public_receipt_token' => ReceiptToken::generate(),
                 'cashier_user_id' => auth()->id(),
                 'grand_total' => $grandTotal,
                 'status' => 'paid',
@@ -148,7 +150,7 @@ class SaleController extends Controller
         });
 
         LowStockNotifier::handleProducts($productIds);
-        app(WhatsAppReceiptSender::class)->sendForOrder((int) $orderId);
+        app(SmsReceiptSender::class)->sendForOrder((int) $orderId);
         app(EmailReceiptSender::class)->sendForOrder((int) $orderId);
 
         AuditTrail::record('sale_created', 'Created paid cashier sale #' . $orderId, [

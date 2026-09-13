@@ -543,9 +543,9 @@
         </div>
 
         <div class="form-group mb-3">
-          <label class="mb-2">WhatsApp Number</label>
+          <label class="mb-2">Phone Number</label>
           <input class="form-control" name="customer_whatsapp" value="{{ old('customer_whatsapp') }}" inputmode="tel" autocomplete="tel" placeholder="0240000000">
-          <small class="text-muted">Optional. A receipt will be sent if WhatsApp is configured.</small>
+          <small class="text-muted">Optional. A receipt link will be sent by SMS when Zeckta is configured.</small>
         </div>
 
         <div class="form-group mb-3">

@@ -185,17 +185,17 @@ class CashierManagementTest extends TestCase
         $this->assertNotNull(DB::table('pos_products')->where('id', $productId)->value('low_stock_notified_at'));
     }
 
-    public function test_cashier_sale_sends_whatsapp_receipt_when_number_is_supplied(): void
+    public function test_cashier_sale_sends_sms_receipt_link_when_phone_is_supplied(): void
     {
         config([
-            'services.whatsapp.access_token' => 'test-token',
-            'services.whatsapp.phone_number_id' => '123456789',
-            'services.whatsapp.api_version' => 'v20.0',
-            'services.whatsapp.default_country_code' => '233',
+            'services.zeckta.endpoint' => 'https://sms.zeckta.test/send',
+            'services.zeckta.api_key' => 'test-token',
+            'services.zeckta.sender_id' => 'ONJECASA',
+            'services.zeckta.default_country_code' => '233',
         ]);
 
         Http::fake([
-            'https://graph.facebook.com/v20.0/123456789/messages' => Http::response(['messages' => [['id' => 'wamid.test']]], 200),
+            'https://sms.zeckta.test/send' => Http::response(['message_id' => 'sms.test'], 200),
         ]);
 
         $cashier = User::factory()->create([
@@ -205,7 +205,7 @@ class CashierManagementTest extends TestCase
 
         $productId = DB::table('pos_products')->insertGetId([
             'code' => 'WA-001',
-            'name' => 'WhatsApp Product',
+            'name' => 'SMS Product',
             'description' => '',
             'price' => 15,
             'stock' => 10,
@@ -231,16 +231,24 @@ class CashierManagementTest extends TestCase
             'grand_total' => 30,
         ]);
 
-        Http::assertSent(function ($request) {
+        $token = DB::table('pos_orders')->where('customer_name', 'Nana Buyer')->value('public_receipt_token');
+        $this->assertNotEmpty($token);
+
+        Http::assertSent(function ($request) use ($token) {
             $payload = $request->data();
 
-            return $request->url() === 'https://graph.facebook.com/v20.0/123456789/messages'
+            return $request->url() === 'https://sms.zeckta.test/send'
                 && $request->hasHeader('Authorization', 'Bearer test-token')
-                && $payload['messaging_product'] === 'whatsapp'
                 && $payload['to'] === '233240000000'
-                && str_contains($payload['text']['body'], 'Receipt: ORD-')
-                && str_contains($payload['text']['body'], 'WhatsApp Product x2 - 30.00');
+                && $payload['sender_id'] === 'ONJECASA'
+                && str_contains($payload['message'], 'Your receipt ORD-')
+                && str_contains($payload['message'], route('receipts.public', $token));
         });
+
+        $this->get(route('receipts.public', $token))
+            ->assertOk()
+            ->assertSee('Nana Buyer')
+            ->assertSee('SMS Product');
     }
 
     public function test_cashier_sale_sends_email_receipt_when_email_is_supplied(): void

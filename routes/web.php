@@ -18,6 +18,7 @@ use App\Http\Controllers\SuperAdminAIController;
 use App\Http\Controllers\Cashier\AIController as CashierAIController;
 use App\Http\Controllers\Cashier\PageController as CashierPageController;
 use App\Http\Controllers\Cashier\SaleController;
+use App\Http\Controllers\PublicReceiptController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LoginController::class, 'showUserOtpLogin'])->name('login');
@@ -29,6 +30,8 @@ Route::post('/admin/login', [LoginController::class, 'login'])->name('admin.logi
 Route::get('/admin/otp', [LoginController::class, 'showAdminOtp'])->name('admin.otp.show');
 Route::post('/admin/otp', [LoginController::class, 'verifyAdminOtp'])->name('admin.otp.verify');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('/r/{token}', [PublicReceiptController::class, 'show'])->name('receipts.public');
+Route::get('/r/{token}/print', [PublicReceiptController::class, 'print'])->name('receipts.public.print');
 
 Route::middleware('auth')->group(function () {
     Route::middleware('role:superadmin')->prefix('superadmin')->name('superadmin.')->group(function () {
